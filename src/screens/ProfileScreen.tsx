@@ -4,10 +4,15 @@ import { User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: any) {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
-  const {user, setUser} = useAuth();
+  const {user, removeUser} = useAuth();
+
+  const handleLogout = async () => {
+    await removeUser();
+    navigation.replace("Auth");
+  };
 
   useEffect(() => {
     const fetchUser = async () => {

@@ -9,6 +9,21 @@ export const ROUTES = {
   CREATE_MOOD: "CreateMood",
 };
 
+export const QUESTIONS = [
+    "How are you feeling today?",
+    "What's your mood like right now?",
+    "Ready to capture your emotions?",
+    "How would you describe your day?",
+    "What's bringing you joy today?",
+  ];
+
+export const CAROUSEL_ANIMATIONS = [
+  require("../../assets/carousel/carousel-1.json"),
+  require("../../assets/carousel/carousel-2.json"),
+  require("../../assets/carousel/carousel-3.json"),
+  require("../../assets/carousel/carousel-4.json"),
+];
+
 export const MOOD_ICONS = [
   {
     name: "HAPPY",

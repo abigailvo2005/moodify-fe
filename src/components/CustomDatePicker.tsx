@@ -25,7 +25,8 @@ export const CustomDatePicker = ({
     >
       <View
         style={{
-          backgroundColor: "#ebc5d9",
+          backgroundColor: "#c9819f",
+          opacity: 1,
           borderRadius: 16,
           padding: 20,
           width: "100%",

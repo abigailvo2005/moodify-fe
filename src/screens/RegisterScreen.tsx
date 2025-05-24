@@ -2,7 +2,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
   Alert,
-  Button,
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
@@ -73,52 +72,6 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   return (
-    // <View style={{ padding: 20 }}>
-    // <Text>Name</Text>
-    // <TextInput
-    //   value={name}
-    //   onChangeText={setName}
-    //   style={{ borderWidth: 1, marginBottom: 10 }}
-    //   />
-
-    //   <Text>Username</Text>
-    //   <TextInput
-    //     value={username}
-    //     onChangeText={setUsername}
-    //     style={{ borderWidth: 1, marginBottom: 10 }}
-    //   />
-
-    //   <Text>Date of Birth</Text>
-    //   <Text
-    //     onPress={() => setShowDatePicker(true)}
-    //     style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
-    //   >
-    //     {dob.toDateString()}
-    //   </Text>
-    //   {showDatePicker && (
-    //     <DateTimePicker
-    //       value={dob}
-    //       mode="date"
-    //       display="default"
-    //       onChange={(event, selectedDate) => {
-    //         setShowDatePicker(false);
-    //         if (selectedDate) setDob(selectedDate);
-    //       }}
-    //       maximumDate={new Date()} // Không cho chọn tương lai
-    //     />
-    //   )}
-
-    //   <Text>Password</Text>
-    //   <TextInput
-    //     value={password}
-    //     onChangeText={setPassword}
-    //     secureTextEntry
-    //     style={{ borderWidth: 1, marginBottom: 20 }}
-    //   />
-
-    //   <Button title="Register" onPress={handleRegister} />
-    // </View>
-
     <View
       style={{
         flex: 1,

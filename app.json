@@ -16,11 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "infoPlist": {
-        "UIStatusBarHidden": true,
-        "UIViewControllerBasedStatusBarAppearance": false
-      }
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
@@ -41,10 +37,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "androidStatusBar": {
-      "hidden": true,
-      "translucent": true
     }
   }
 }

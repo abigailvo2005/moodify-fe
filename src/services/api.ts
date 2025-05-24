@@ -3,6 +3,8 @@ import axios from "axios";
 const BASE_URL = "https://6676cc25145714a1bd72d245.mockapi.io";
 const BASE_URL_V2 = "https://682e81f9746f8ca4a47d40da.mockapi.io"; // For "requests" collection
 
+// import BASE_URL from 'react-native-dotenv';
+
 // In future, when using JWT: set the token in the headers
 
 // Login user by checking if a user exists with the given username and password
