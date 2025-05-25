@@ -41,7 +41,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
       console.log("Mood saved successfully!");
 
       // Navigate to the MoodList screen inside the BottomTab navigator
-      navigation.navigate("Tabs", { screen: "Moods" });
+      navigation.navigate("Tabs", { screen: "Mood" });
     } catch (error) {
       console.error("Error saving mood:", error);
     }
@@ -54,7 +54,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
         {MOOD_ICONS.map((icon) => (
           <TouchableOpacity
             key={icon.label}
-            onPress={() => setMoodIcon(icon.name)}
+            onPress={() => setMoodIcon(icon.label)}
             style={{ marginHorizontal: 8 }}
           >
             <LottieView
@@ -66,7 +66,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
             <Text
               style={{
                 textAlign: "center",
-                color: moodIcon === icon.name ? "#333" : "#bdbdbd",
+                color: moodIcon === icon.label ? "#333" : "#bdbdbd",
               }}
             >
               {icon.label}

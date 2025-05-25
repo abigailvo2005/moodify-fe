@@ -1,190 +1,134 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
-import { formatDate } from '../utils/formatDate';
-import LottieView from 'lottie-react-native';
-// Map mood icon names to Lottie animation JSON files
-const moodLottieAnimations: Record<string, any> = {
-  happy: require('../assets/lottie/happy.json'),
-  sad: require('../assets/lottie/sad.json'),
-  angry: require('../assets/lottie/angry.json'),
-  surprised: require('../assets/lottie/surprised.json'),
-  // Add more mappings as needed
-};
-
-
-// Simple privacy indicator using Lottie (optional, fallback to emoji)
-const PrivacyIndicator: React.FC<{ isPrivate: boolean }> = ({ isPrivate }) => {
-  return (
-    <View style={styles.privacyContainer}>
-      <Text style={{ fontSize: 18 }}>
-        {isPrivate ? '🙈' : '👁️'}
-      </Text>
-    </View>
-  );
-};
-
+import React from "react";
+import { Text, View, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { MOOD_ICONS } from "../constants/index"; // Adjust the import path as necessary
+import { Mood } from "../types"; // Adjust the import path as necessary
+import { formatDate } from "../utils/formatDate";
+import LottieView from "lottie-react-native";
 
 interface MoodCardProps {
-  mood: {
-    id: string;
-    icon: string;
-    description: string;
-    reason?: string;
-    date: string; // ISO string
-    isPrivate: boolean;
-    createdByMe: boolean;
-  };
-  onEdit?: () => void;
-  onDelete?: () => void;
+  mood: Mood;
 }
 
+export default function MoodCard({ mood }: MoodCardProps) {
+  // Determine the mood icon based on the mood label or name
+  let displayedIcon = null;
+  for (const icon of Object.values(MOOD_ICONS)) {
+    if (icon.label === mood.mood || icon.name === mood.mood) {
+      displayedIcon = icon.animation;
+      break;
+    }
+  }
 
-// Privacy indicator component
-// (removed duplicate PrivacyIndicator declaration)
-// Icon component to display mood icon with appropriate styling
-const MoodIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
-  const animationSource = moodLottieAnimations[iconName] || moodLottieAnimations['happy'];
-  return (
-    <View style={styles.iconContainer}>
-      <LottieView
-        source={animationSource}
-        autoPlay
-        loop
-        style={{ width: 36, height: 36 }}
-      />
-    </View>
-  );
-};
-// Action buttons component
-const ActionButtons: React.FC<{
-  onEdit?: () => void;
-  onDelete?: () => void;
-}> = ({ onEdit, onDelete }) => {
-  return (
-    <View style={styles.actionsContainer}>
-      <TouchableOpacity style={styles.actionButton} onPress={onEdit}>
-        {/* <Icon name="pencil" size={18} color="#007AFF" /> */}
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.actionButton} onPress={onDelete}>
-        {/* <Icon name="delete" size={18} color="#FF3B30" /> */}
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-const MoodCard: React.FC<MoodCardProps> = ({ mood, onEdit, onDelete }) => {
-  const formattedDate = formatDate(mood.date);
+  const isPrivate = mood.isPrivate;
 
   return (
-    <View style={styles.container}>
-      {/* Privacy indicator */}
-      <PrivacyIndicator isPrivate={mood.isPrivate} />
-
-      <View style={styles.contentContainer}>
-        {/* Top row with icon and description */}
-        <View style={styles.topRow}>
-          <MoodIcon iconName={mood.icon} />
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.description}>{mood.description}</Text>
-          </View>
-        </View>
-
-        {/* Mood details */}
-        <View style={styles.detailsContainer}>
-          <Text style={styles.dateText}>{formattedDate}</Text>
-          {mood.reason && <Text style={styles.reasonText}>{mood.reason}</Text>}
-        </View>
+    <View
+      style={[
+        styles.moodCard,
+        { backgroundColor: isPrivate ? "#fff2fc" : "#FFFFFF" },
+      ]}
+    >
+      {/* Left side - Mood Icon */}
+      <View style={styles.leftSection}>
+        <LottieView
+          source={displayedIcon}
+          style={{ width: 50, height: 50 }}
+          autoPlay
+          loop
+        />
+        <Text style={styles.moodLabel}>{mood.mood}</Text>
       </View>
 
-      {/* Action buttons if the mood was created by the user */}
-      {mood.createdByMe && (
-        <ActionButtons onEdit={onEdit} onDelete={onDelete} />
-      )}
+      {/* Right side - Content */}
+      <View style={styles.rightSection}>
+        <View style={styles.headerRow}>
+          <Text style={styles.description} numberOfLines={2}>
+            {mood.description}
+          </Text>
+          <Ionicons
+            name={isPrivate ? "person" : "globe-outline"}
+            size={16}
+            color={isPrivate ? "#FF6B9D" : "#9652d1"}
+            style={styles.privacyIcon}
+          />
+        </View>
+
+        {mood.reason && (
+          <Text style={styles.reason} numberOfLines={2}>
+            {mood.reason}
+          </Text>
+        )}
+
+        <Text style={styles.date}>
+          {formatDate(mood.date, false)}
+        </Text>
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
+  moodCard: {
+    flexDirection: "row",
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  iconText: {
-    fontSize: 20,
+  leftSection: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+    minWidth: 80,
   },
-  descriptionContainer: {
+  moodEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  moodLabel: {
+    fontSize: 14,
+    fontFamily: "FredokaSemiBold",
+    color: "#c9659a",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  rightSection: {
     flex: 1,
+    justifyContent: "space-between",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontFamily: "FredokaSemiBold",
+    color: "#2D3748",
+    flex: 1,
+    marginRight: 8,
   },
-  detailsContainer: {
-    marginTop: 8,
-    paddingLeft: 52, // Align with the text after the icon
+  privacyIcon: {
+    marginTop: 2,
   },
-  dateText: {
+  reason: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    fontFamily: "FredokaSemiBold",
+    color: "#718096",
+    lineHeight: 20,
+    marginBottom: 8,
   },
-  reasonText: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  privacyContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 1,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 16,
-  },
-  actionButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginLeft: 8,
+  date: {
+    fontSize: 12,
+    fontFamily: "FredokaSemiBold",
+    color: "#A0AEC0",
   },
 });
-
-export default MoodCard;

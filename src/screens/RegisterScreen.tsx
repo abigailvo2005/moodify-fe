@@ -36,7 +36,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   const handleRegister = async () => {
     try {
-      const formattedDob = formatDate(dob);
+      const formattedDob = formatDate(dob, false);
 
       // Generate a unique referral code
       let referralCode = "";
@@ -148,7 +148,7 @@ export default function RegisterScreen({ navigation }: any) {
                   <Text
                     onPress={toggleDatePicker}
                     style={styles.inputField}
-                  >{formatDate(dob)}</Text>
+                  >{formatDate(dob, false)}</Text>
                   {showDatePicker && (
                     <CustomDatePicker
                       dob={dob}

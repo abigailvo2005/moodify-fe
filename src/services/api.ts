@@ -31,9 +31,6 @@ export const registerUser = async (user: any) => {
       },
     });
     console.log("User registered:", res.data);
-    // Optionally, you can store the user data in AsyncStorage or navigate to another screen
-    //await AsyncStorage.setItem('user', JSON.stringify(res.data));
-    //navigation.replace('Login');
     return res.data;
   } catch (error) {
     console.error("Registration failed:", error);
@@ -66,7 +63,7 @@ export const getMoods = async (userId: string) => {
     });
     return res.data;
   } catch (error) {
-    console.error("Fetching moods failed:", error);
+    //console.error("Fetching moods failed:", error);
     return [];
   }
 };
@@ -131,3 +128,26 @@ export const connectFriend = async (userId: string, friendId: string) => {
     return null;
   }
 };
+
+
+// Get mood by moodId
+export const getMoodById = async (moodId: string) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/mood/${moodId}`);
+    return res.data;
+  } catch (error) {
+    console.error("Fetching mood by ID failed:", error);
+    return null;
+  }
+}
+
+// Get all friends of a user
+export const getFriends = async (userId: string) => {
+  try {
+    // Assuming you have a 'friends' resource in your mockapi
+    return [];
+  } catch (error) {
+    console.error("Fetching friends failed:", error);
+    return [];
+  }
+}

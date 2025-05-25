@@ -1,7 +1,7 @@
 // constants/routes.ts
 export const ROUTES = {
   HOME: "Home",
-  MOODS: "Moods",
+  MOODS: "Mood",
   CONNECT_FRIENDS: "Friends",
   PROFILE: "Profile",
   LOGIN: "Login",
