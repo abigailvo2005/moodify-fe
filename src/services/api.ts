@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_BASE_URL, API_BASE_URL_V2 } from '@env';
 
-const BASE_URL = "https://6676cc25145714a1bd72d245.mockapi.io";
-const BASE_URL_V2 = "https://682e81f9746f8ca4a47d40da.mockapi.io"; // For "requests" collection
+const BASE_URL = API_BASE_URL;
+const BASE_URL_V2 = API_BASE_URL_V2; // For "requests" collection
 
 // import BASE_URL from 'react-native-dotenv';
 
