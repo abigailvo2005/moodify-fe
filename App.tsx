@@ -1,12 +1,14 @@
-import React, { use, useEffect, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import RootNavigator from "./navigation/RootNavigator";
-import { AuthProvider } from "./contexts/AuthContext";
-import { customFonts } from "./utils/fonts";
+import { TEST_VAR } from '@env';
 import * as Font from "expo-font";
+import React, { useEffect, useState } from "react";
+import { AuthProvider } from "./src/contexts/AuthContext";
+import RootNavigator from "./src/navigation/RootNavigator";
+import { customFonts } from "./src/utils/fonts";
 
 
 export default function App() {
+  console.log('Environment variable:', TEST_VAR);
+
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   // Load custom fonts to use across app
