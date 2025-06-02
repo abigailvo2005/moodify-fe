@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -35,7 +37,6 @@ export default function DetailMoodScreen() {
   // Fetch mood details when the component mounts or moodId changes - this ensures we always have the latest mood data and can handle cases where the user navigates back to this screen after editing.
   useEffect(() => {
     fetchMoodDetail();
-    setMoodIcon(mood?.mood || null); // Set initial mood icon based on the fetched mood
   }, [moodId]);
 
   // Fetch mood details from the API
@@ -44,6 +45,7 @@ export default function DetailMoodScreen() {
       setLoading(true);
       const moodData = await getMoodById(moodId);
       setMood(moodData);
+      setMoodIcon(mood?.mood || null); // Set initial mood icon based on the fetched mood
       setEditedMood(moodData);
     } catch (error) {
       console.error("Error fetching mood:", error);
@@ -134,10 +136,12 @@ export default function DetailMoodScreen() {
   const handleCancel = () => {
     setEditedMood(mood ?? null);
     setIsEditing(false);
+    setMoodIcon(mood?.mood || null);
   };
 
   const isOwner = mood?.userId === user?.id;
 
+  // loading state UI
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -157,245 +161,282 @@ export default function DetailMoodScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Background Gradient */}
-      <LinearGradient
-        colors={["#deb9b6", "#9383c7"]}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="#9e4d7f" />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Mood Details</Text>
-
-        {/* Header actions for editing and saving mood - only for owner of this mood */}
-        {isOwner && (
-          <View style={styles.headerActions}>
-            {/* User is not editing */}
-            {!isEditing ? (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => setIsEditing(true)}
-              >
-                <Icon name="create-outline" size={24} color="#9e4d7f" />
-              </TouchableOpacity>
-            ) : (
-              // User is editing
-              <View style={styles.editActions}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={handleCancel}
-                >
-                  <Icon name="close" size={25} color="#9e4d7f" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Icon name="checkmark" size={20} color="#FFFFFF" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Mood */}
-        <View style={[styles.moodCard, { borderLeftColor: "#D53F8C" }]}>
-          <View style={styles.moodHeader}>
-            <Text style={styles.moodLabel}>Mood</Text>
-            {/* Mood Edit Panel if its owner is editing */}
-            {isEditing && isOwner ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ flexGrow: 1, alignItems: "center" }}
-                style={{ width: "100%", marginBottom: 16 }}
-              >
-                {MOOD_ICONS.map((icon) => (
-                  <TouchableOpacity
-                    key={icon.label}
-                    onPress={() => setMoodIcon(icon.label)}
-                    style={{ marginHorizontal: 8 }}
-                  >
-                    <LottieView
-                      source={icon.animation}
-                      style={{ width: 50, height: 50 }}
-                      autoPlay
-                      loop
-                    />
-                    <Text
-                      style={[
-                        styles.moodInput,
-                        {
-                          color:
-                            moodIcon === icon.label ? "#9e4d7f" : "#bdbdbd",
-                        },
-                      ]}
-                    >
-                      {icon.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : (
-              <View style={{ display: "flex", alignItems: "center" }}>
-                {MOOD_ICONS.map(
-                  (item) =>
-                    (item.label === mood.mood || item.name === mood.mood) && (
-                      <LottieView
-                        key={item.label}
-                        source={item.animation}
-                        style={{ width: 80, height: 80 }}
-                        autoPlay
-                        loop
-                      />
-                    )
-                )}
-                <Text style={styles.moodText}>{mood.mood}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Description */}
-        <View style={styles.noteCard}>
-          <Text style={styles.noteLabel}>Description</Text>
-          {isEditing && isOwner ? (
-            <TextInput
-              style={styles.noteInput}
-              value={editedMood?.description || "--No description provided--"}
-              onChangeText={(text) =>
-                setEditedMood((prev) =>
-                  prev ? { ...prev, description: text } : null
-                )
-              }
-              placeholder="Describe your mood in detail..."
-              multiline
-              numberOfLines={4}
-            />
-          ) : (
-            <Text style={styles.noteText}>
-              {mood.description || "No description provided"}
-            </Text>
-          )}
-        </View>
-
-        {/* Reason */}
-        <View style={styles.noteCard}>
-          <Text style={styles.noteLabel}>Reason</Text>
-          {isEditing && isOwner ? (
-            <TextInput
-              style={styles.noteInput}
-              value={editedMood?.reason || "--No reason specified--"}
-              onChangeText={(text) =>
-                setEditedMood((prev) =>
-                  prev ? { ...prev, reason: text } : null
-                )
-              }
-              placeholder="What caused this mood?"
-              multiline
-              numberOfLines={3}
-            />
-          ) : (
-            <Text style={styles.noteText}>
-              {mood.reason || "No reason specified"}
-            </Text>
-          )}
-        </View>
-
-        {/* Date */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Date</Text>
-          <Text style={styles.infoText}>{formatDate(mood.date, false)}</Text>
-        </View>
-
-        {/* Privacy */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Privacy</Text>
-          {/* Privacy Toggle for editing mood */}
-          {isEditing && isOwner ? (
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        {/* Background Gradient */}
+        <LinearGradient
+          colors={["#deb9b6", "#9383c7"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
             <TouchableOpacity
-              style={[
-                styles.privacyToggle,
-                {
-                  backgroundColor: editedMood?.isPrivate
-                    ? "#FED7D7"
-                    : "#C6F6D5",
-                },
-              ]}
-              onPress={() =>
-                setEditedMood((prev) =>
-                  prev ? { ...prev, isPrivate: !prev.isPrivate } : null
-                )
-              }
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
-              <Text
-                style={[
-                  styles.privacyText,
-                  {
-                    color: editedMood?.isPrivate ? "#C53030" : "#276749",
-                  },
-                ]}
-              >
-                {editedMood?.isPrivate ? "Private" : "Public"}
-              </Text>
+              <Icon name="arrow-back" size={24} color="#9e4d7f" />
             </TouchableOpacity>
-          ) : (
-            <View
-              style={[
-                styles.privacyBadge,
-                {
-                  backgroundColor: mood.isPrivate ? "#FED7D7" : "#C6F6D5",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.privacyBadgeText,
-                  {
-                    color: mood.isPrivate ? "#C53030" : "#276749",
-                  },
-                ]}
-              >
-                {mood.isPrivate ? "Private" : "Public"}
+
+            <Text style={styles.headerTitle}>Mood Details</Text>
+
+            {/* Header actions for editing and saving mood - only for owner of this mood */}
+            {isOwner && (
+              <View style={styles.headerActions}>
+                {/* User is not editing */}
+                {!isEditing ? (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => setIsEditing(true)}
+                  >
+                    <Icon name="create-outline" size={24} color="#9e4d7f" />
+                  </TouchableOpacity>
+                ) : (
+                  // User is editing
+                  <View style={styles.editActions}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={handleCancel}
+                    >
+                      <Icon name="close" size={25} color="#9e4d7f" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Icon name="checkmark" size={20} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Mood */}
+            <View style={[styles.moodCard, { borderLeftColor: "#D53F8C" }]}>
+              <View style={styles.moodHeader}>
+                <Text style={styles.moodLabel}>Mood</Text>
+                {/* Mood Edit Panel if its owner is editing */}
+                {isEditing && isOwner ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexGrow: 1,
+                      alignItems: "center",
+                    }}
+                    style={{ width: "100%", marginBottom: 16 }}
+                  >
+                    {MOOD_ICONS.map((icon) => (
+                      <TouchableOpacity
+                        key={icon.label}
+                        onPress={() => setMoodIcon(icon.label)}
+                        style={{ marginHorizontal: 8 }}
+                      >
+                        <LottieView
+                          source={icon.animation}
+                          style={{ width: 50, height: 50 }}
+                          autoPlay
+                          loop
+                        />
+                        <Text
+                          style={[
+                            styles.moodInput,
+                            {
+                              color:
+                                moodIcon === icon.label ||
+                                (moodIcon === icon.label &&
+                                  mood.mood === icon.label &&
+                                  mood.mood === moodIcon)
+                                  ? "#9e4d7f"
+                                  : "#bdbdbd",
+                            },
+                          ]}
+                        >
+                          {icon.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View style={{ display: "flex", alignItems: "center" }}>
+                    {MOOD_ICONS.map(
+                      (item) =>
+                        item.label === mood.mood && (
+                          <LottieView
+                            key={item.label}
+                            source={item.animation}
+                            style={{ width: 80, height: 80 }}
+                            autoPlay
+                            loop
+                          />
+                        )
+                    )}
+                    <Text style={styles.moodText}>{mood.mood}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Description */}
+            <View style={styles.noteCard}>
+              <Text style={styles.noteLabel}>Description</Text>
+              {isEditing && isOwner ? (
+                <TextInput
+                  style={styles.noteInput}
+                  value={editedMood?.description || ""}
+                  onChangeText={(text) =>
+                    setEditedMood((prev) =>
+                      prev ? { ...prev, description: text } : null
+                    )
+                  }
+                  placeholder="Describe your mood in detail..."
+                  multiline
+                  numberOfLines={4}
+                />
+              ) : (
+                <Text style={styles.noteText}>
+                  {mood.description || "No description provided"}
+                </Text>
+              )}
+            </View>
+
+            {/* Reason */}
+            <View style={styles.noteCard}>
+              <Text style={styles.noteLabel}>Reason</Text>
+              {isEditing && isOwner ? (
+                <TextInput
+                  style={styles.noteInput}
+                  value={editedMood?.reason || ""}
+                  onChangeText={(text) =>
+                    setEditedMood((prev) =>
+                      prev ? { ...prev, reason: text } : null
+                    )
+                  }
+                  placeholder="What caused this mood?"
+                  multiline
+                  numberOfLines={3}
+                />
+              ) : (
+                <Text style={styles.noteText}>
+                  {mood.reason || "No reason specified"}
+                </Text>
+              )}
+            </View>
+
+            {/* Date */}
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Date</Text>
+              <Text style={styles.infoText}>
+                {formatDate(mood.date, false)}
               </Text>
             </View>
-          )}
-        </View>
 
-        {/* Delete Button */}
-        {isOwner && !isEditing && (
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDelete}
-            disabled={saving}
-          >
-            <Icon name="trash-outline" size={20} color="#F56565" />
-            <Text style={styles.deleteButtonText}>Delete Mood</Text>
-          </TouchableOpacity>
-        )}
+            {/* Privacy */}
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Privacy</Text>
+              {/* Privacy Toggle for editing mood */}
+              {isEditing && isOwner ? (
+                <TouchableOpacity
+                  style={[
+                    styles.privacyToggle,
+                    {
+                      backgroundColor: editedMood?.isPrivate
+                        ? "#FED7D7"
+                        : "#C6F6D5",
+                    },
+                  ]}
+                  onPress={() =>
+                    setEditedMood((prev) =>
+                      prev ? { ...prev, isPrivate: !prev.isPrivate } : null
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.privacyText,
+                      {
+                        color: editedMood?.isPrivate ? "#C53030" : "#276749",
+                      },
+                    ]}
+                  >
+                    {editedMood?.isPrivate ? "Private" : "Public"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.privacyBadge,
+                    {
+                      backgroundColor: mood.isPrivate ? "#FED7D7" : "#C6F6D5",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.privacyBadgeText,
+                      {
+                        color: mood.isPrivate ? "#C53030" : "#276749",
+                      },
+                    ]}
+                  >
+                    {mood.isPrivate ? "Private" : "Public"}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Delete Button */}
+            {isOwner && !isEditing && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDelete}
+                disabled={saving}
+              >
+                <Icon name="trash-outline" size={20} color="#F56565" />
+                <Text style={styles.deleteButtonText}>Delete Mood</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "transparent",
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+
   container: {
     flex: 1,
+  },
+
+  scrollContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
   },
 
   // Loading and Error States

@@ -61,7 +61,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Connect Friends Section */}
         <TouchableOpacity
           style={styles.connectFriendsContainer}
-          onPress={() => {navigation.navigate(ROUTES.CONNECT_FRIENDS); console.log("Connect Friends Pressed")}}
+          onPress={() => {navigation.navigate(ROUTES.CONNECT_FRIENDS)}}
           activeOpacity={0.7}
         >
           <Text style={styles.connectFriendsText}>

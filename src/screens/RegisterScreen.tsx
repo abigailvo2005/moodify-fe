@@ -11,9 +11,14 @@ import {
   View,
   StyleSheet,
   Keyboard,
+  Platform,
 } from "react-native";
 import uuid from "react-native-uuid";
-import { checkReferralCode, registerUser } from "../services/api";
+import {
+  checkReferralCode,
+  isUsernameExisted,
+  registerUser,
+} from "../services/api";
 import { User } from "../types";
 import { formatDate } from "../utils/formatDate";
 import { GradientButton } from "../components/GradientButton";
@@ -48,6 +53,21 @@ export default function RegisterScreen({ navigation }: any) {
       } while (isExist);
       // Check if the referral code already exists
 
+      // Required Validation
+      if (!name.trim() || !username.trim() || !password.trim()) {
+        Alert.alert("Oops! 😅", "Please fill in all required fields");
+        return;
+      }
+
+      // Existed username Validation
+      if (await isUsernameExisted(username.trim())) {
+        Alert.alert(
+          "Oops! 😅",
+          "This username has already been taken. Please choose another one!"
+        );
+        return;
+      }
+
       const newUser: User = {
         id: uuid.v4(),
         name,
@@ -72,10 +92,10 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-      }}
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       {/* Background Gradient */}
       <LinearGradient
@@ -83,109 +103,113 @@ export default function RegisterScreen({ navigation }: any) {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Login */}
-      <KeyboardAvoidingView style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-          <ScrollView
-            style={{ flex: 1, minHeight: height }}
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.container, { minHeight: height }]}>
-              <View style={styles.welcomeContainer}>
-                <LottieView
-                  source={require("../../assets/warm-welcome.json")}
-                  style={styles.welcomeAnimation}
-                  autoPlay
-                  loop
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        <View style={[styles.container, { minHeight: height }]}>
+          <View style={styles.welcomeContainer}>
+            <LottieView
+              source={require("../../assets/warm-welcome.json")}
+              style={styles.welcomeAnimation}
+              autoPlay
+              loop
+            />
+          </View>
+
+          {/* Form section */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                style={styles.inputField}
+                placeholder="Enter your full name"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Username</Text>
+              <TextInput
+                value={username}
+                onChangeText={setUsername}
+                style={styles.inputField}
+                placeholder="Enter your username"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.inputField}
+                placeholder="Enter your password"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Date of Birth</Text>
+              <Text onPress={toggleDatePicker} style={styles.inputField}>
+                {formatDate(dob, false)}
+              </Text>
+              {showDatePicker && (
+                <CustomDatePicker
+                  dob={dob}
+                  setDob={setDob}
+                  toggleDatePicker={toggleDatePicker}
+                />
+              )}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <View style={styles.buttonWrapper}>
+                <GradientButton text="Register" navFunc={handleRegister} />
+              </View>
+              <View style={styles.buttonWrapper}>
+                <GradientButton
+                  text="Login"
+                  navFunc={() => navigation.navigate("Login")}
                 />
               </View>
-
-              <View style={styles.formContainer}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Full Name</Text>
-                  <TextInput
-                    value={name}
-                    onChangeText={setName}
-                    style={styles.inputField}
-                    placeholder="Enter your full name"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Username</Text>
-                  <TextInput
-                    value={username}
-                    onChangeText={setUsername}
-                    style={styles.inputField}
-                    placeholder="Enter your username"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.inputField}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Date of Birth</Text>
-                  <Text
-                    onPress={toggleDatePicker}
-                    style={styles.inputField}
-                  >{formatDate(dob, false)}</Text>
-                  {showDatePicker && (
-                    <CustomDatePicker
-                      dob={dob}
-                      setDob={setDob}
-                      toggleDatePicker={toggleDatePicker}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.buttonContainer}>
-                  <View style={styles.buttonWrapper}>
-                    <GradientButton text="Register" navFunc={handleRegister} />
-                  </View>
-                  <View style={styles.buttonWrapper}>
-                    <GradientButton
-                      text="Login"
-                      navFunc={() => navigation.navigate("Login")}
-                    />
-                  </View>
-                </View>
-              </View>
             </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </View>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 20,
+    paddingBottom: 20,
   },
+
   container: {
-    padding: 30,
     flex: 1,
   },
+
+  scrollContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+
   welcomeContainer: {
     marginBottom: -100,
     padding: 10,
@@ -218,7 +242,7 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     justifyContent: "center",
-    paddingBottom: 50, // Space cho keyboard
+    paddingHorizontal: 30,
   },
   inputGroup: {
     marginBottom: 20,

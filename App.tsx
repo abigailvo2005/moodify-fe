@@ -1,4 +1,3 @@
-import { TEST_VAR } from '@env';
 import * as Font from "expo-font";
 import React, { useEffect, useState } from "react";
 import { AuthProvider } from "./src/contexts/AuthContext";
@@ -7,7 +6,6 @@ import { customFonts } from "./src/utils/fonts";
 
 
 export default function App() {
-  console.log('Environment variable:', TEST_VAR);
 
   const [fontsLoaded, setFontsLoaded] = useState(false);
 

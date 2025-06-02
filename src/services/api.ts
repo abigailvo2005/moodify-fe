@@ -1,10 +1,10 @@
 import axios from "axios";
 import { API_BASE_URL, API_BASE_URL_V2 } from '@env';
+import { User } from "../types";
 
 const BASE_URL = API_BASE_URL;
 const BASE_URL_V2 = API_BASE_URL_V2; // For "requests" collection
 
-// import BASE_URL from 'react-native-dotenv';
 
 // In future, when using JWT: set the token in the headers
 
@@ -34,8 +34,43 @@ export const registerUser = async (user: any) => {
     console.log("User registered:", res.data);
     return res.data;
   } catch (error) {
-    console.error("Registration failed:", error);
+    console.log("Registration failed:", error);
     return null;
+  }
+};
+
+// Update user
+export const updateUser = async (userId: string, updatedUser: User) => {
+  try {
+    const res = await axios.put(`${BASE_URL}/users/${userId}`, updatedUser, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.log("Updating user failed:", error);
+    return null;
+  }
+};
+
+// Check whether username existed or not, skip if it belongs to the same userId (if provided)
+export const isUsernameExisted = async (username: string, userId: string | null = null) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/users`, {
+      params: { username },
+    });
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      // If userId is provided, skip if the username belongs to the same user
+      if (userId) {
+        return res.data.some((user: any) => user.username === username && user.id !== userId);
+      }
+      // If userId is not provided, any match means username exists
+      return true;
+    }
+    return false;
+  } catch (error) {
+    return false;
   }
 };
 
@@ -51,7 +86,7 @@ export const checkReferralCode = async (referralCode: string) => {
     }
     return null;
   } catch (error) {
-    //console.error("Checking referral code failed:", error);
+    //console.log("Checking referral code failed:", error);
     return null;
   }
 };
@@ -64,7 +99,7 @@ export const getMoods = async (userId: string) => {
     });
     return res.data;
   } catch (error) {
-    //console.error("Fetching moods failed:", error);
+    console.log("Fetching moods failed:", error);
     return [];
   }
 };
@@ -79,7 +114,7 @@ export const createMood = async (mood: any) => {
     });
     return res.data;
   } catch (error) {
-    console.error("Creating mood failed:", error);
+    console.log("Creating mood failed:", error);
     return null;
   }
 };
@@ -94,7 +129,7 @@ export const updateMood = async (moodId: string, mood: any) => {
     });
     return res.data;
   } catch (error) {
-    console.error("Updating mood failed:", error);
+    console.log("Updating mood failed:", error);
     return null;
   }
 };
@@ -105,7 +140,7 @@ export const deleteMood = async (moodId: string) => {
     const res = await axios.delete(`${BASE_URL}/mood/${moodId}`);
     return res.data;
   } catch (error) {
-    console.error("Deleting mood failed:", error);
+    console.log("Deleting mood failed:", error);
     return null;
   }
 };
@@ -125,7 +160,7 @@ export const connectFriend = async (userId: string, friendId: string) => {
     );
     return res.data;
   } catch (error) {
-    console.error("Connecting friend failed:", error);
+    console.log("Connecting friend failed:", error);
     return null;
   }
 };
@@ -137,7 +172,7 @@ export const getMoodById = async (moodId: string) => {
     const res = await axios.get(`${BASE_URL}/mood/${moodId}`);
     return res.data;
   } catch (error) {
-    console.error("Fetching mood by ID failed:", error);
+    console.log("Fetching mood by ID failed:", error);
     return null;
   }
 }
@@ -148,7 +183,7 @@ export const getFriends = async (userId: string) => {
     // Assuming you have a 'friends' resource in your mockapi
     return [];
   } catch (error) {
-    console.error("Fetching friends failed:", error);
+    console.log("Fetching friends failed:", error);
     return [];
   }
 }

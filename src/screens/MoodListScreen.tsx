@@ -16,6 +16,7 @@ import MoodCard from "../components/MoodCard";
 import Icon from "react-native-vector-icons/Ionicons";
 import { formatDate } from "../utils/formatDate";
 import CustomModalPicker from "../components/CustomModalPicker";
+import { ROUTES } from "../constants";
 
 export default function MoodListScreen({ navigation }: any) {
   const [moods, setMoods] = useState<Mood[]>([]);
@@ -181,7 +182,19 @@ export default function MoodListScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mood Diary</Text>
+        <View style={styles.headerContainer}>
+          {/* Heading */}
+          <Text style={styles.title}>Mood Diary</Text>
+
+          {/* Add New Mood Button */}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate(ROUTES.CREATE_MOOD)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>Add Mood +</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Friends Selection Dropdown */}
         <View style={styles.pickerContainer}>
@@ -225,9 +238,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8F9FA",
   },
+
+  // Button Styles
+  primaryButton: {
+    backgroundColor: "rgba(243, 180, 196, 0.72)",
+    paddingVertical: 16,
+    width: 150,
+    borderRadius: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    justifyContent: "center",
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontFamily: "FredokaSemiBold", // Make sure this font is loaded
+    color: "rgba(93, 22, 40, 0.72)",
+    fontWeight: "600",
+  },
+  headerContainer: {
+    flexDirection: "row", 
+    justifyContent: "space-between",
+  },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 40,
     paddingBottom: 20,
   },
   title: {
@@ -240,6 +278,8 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 2,
   },
+
+  // Picker section
   pickerContainer: {
     marginBottom: 15,
   },
@@ -249,25 +289,13 @@ const styles = StyleSheet.create({
     color: "#4A5568",
     marginBottom: 5,
   },
-  pickerWrapper: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    overflow: "hidden",
-  },
-  picker: {
-    height: 50,
-    fontSize: 16,
-    fontFamily: "Fredoka",
-    color: "blue",
-    backgroundColor: "red",
-  },
   subtitle: {
     fontSize: 16,
     fontFamily: "FredokaSemiBold",
     color: "#718096",
   },
+
+  // Flatlist style
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,

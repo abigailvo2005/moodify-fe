@@ -8,10 +8,8 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
   KeyboardAvoidingView,
-  StatusBar,
+  Platform,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
@@ -49,15 +47,11 @@ export default function LoginScreen({ navigation }: any) {
     }
   };
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
   return (
-    <View
-      style={{
-        flex: 1,
-      }}
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       {/* Background Gradient */}
       <LinearGradient
@@ -65,85 +59,90 @@ export default function LoginScreen({ navigation }: any) {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Login */}
-      <KeyboardAvoidingView style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-          <ScrollView
-            style={{ flex: 1, minHeight: height }}
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.container, { minHeight: height }]}>
-              <View style={styles.welcomeContainer}>
-                <LottieView
-                  source={require("../../assets/warm-welcome.json")}
-                  style={styles.welcomeAnimation}
-                  autoPlay
-                  loop
-                />
-                <Text style={styles.welcomeSubText}>welcome to</Text>
-                <TypewriterText text="Moodify!" style={styles.welcomeText} />
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        {/* welcome section */}
+        <View style={[styles.container, { minHeight: height }]}>
+          <View style={styles.welcomeContainer}>
+            <LottieView
+              source={require("../../assets/warm-welcome.json")}
+              style={styles.welcomeAnimation}
+              autoPlay
+              loop
+            />
+            <Text style={styles.welcomeSubText}>welcome to</Text>
+            <TypewriterText text="Moodify!" style={styles.welcomeText} />
+          </View>
+
+          {/* Form login */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Username</Text>
+              <TextInput
+                value={username}
+                onChangeText={setUsername}
+                style={styles.inputField}
+                placeholder="Enter your username"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.inputField}
+                placeholder="Enter your password"
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <View style={styles.buttonWrapper}>
+                <GradientButton text="Login" navFunc={handleLogin} />
               </View>
-
-              <View style={styles.formContainer}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Username</Text>
-                  <TextInput
-                    value={username}
-                    onChangeText={setUsername}
-                    style={styles.inputField}
-                    placeholder="Enter your username"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.inputField}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-
-                <View style={styles.buttonContainer}>
-                  <View style={styles.buttonWrapper}>
-                    <GradientButton text="Login" navFunc={handleLogin} />
-                  </View>
-                  <View style={styles.buttonWrapper}>
-                    <GradientButton
-                      text="Register"
-                      navFunc={() => navigation.navigate("Register")}
-                    />
-                  </View>
-                </View>
+              <View style={styles.buttonWrapper}>
+                <GradientButton
+                  text="Register"
+                  navFunc={() => navigation.navigate("Register")}
+                />
               </View>
             </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </View>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 20,
+    paddingBottom: 20,
   },
+
   container: {
-    padding: 30,
     flex: 1,
   },
+
+  scrollContentContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   welcomeContainer: {
-    marginBottom: -100,
+    marginBottom: height * -0.15,
     padding: 10,
     borderRadius: 10,
     marginTop: 20,
@@ -162,7 +161,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 2,
     elevation: 2,
-    marginBottom: -10,
   },
   welcomeSubText: {
     fontSize: 24,
@@ -173,15 +171,15 @@ const styles = StyleSheet.create({
   },
   welcomeAnimation: {
     width: width,
-    height: height / 2.5, // Giảm chiều cao để có space cho form
+    height: height / 2.5,
     alignSelf: "center",
-    marginBottom: -100,
-    marginTop: -100,
+    marginBottom: height * -0.09,
+    marginTop: height * -0.12,
   },
   formContainer: {
     flex: 1,
     justifyContent: "center",
-    paddingBottom: 50, // Space cho keyboard
+    paddingHorizontal: 30,
   },
   inputGroup: {
     marginBottom: 20,

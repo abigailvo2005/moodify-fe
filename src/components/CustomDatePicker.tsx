@@ -1,6 +1,6 @@
 import React from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button, View } from "react-native";
+import { View } from "react-native";
 import { GradientButton } from "./GradientButton";
 
 export type CustomDatePickerProps = {
