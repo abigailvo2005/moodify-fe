@@ -48,7 +48,7 @@ export default function DetailMoodScreen() {
       setMoodIcon(mood?.mood || null); // Set initial mood icon based on the fetched mood
       setEditedMood(moodData);
     } catch (error) {
-      console.error("Error fetching mood:", error);
+      console.log("Error fetching mood:", error);
       Alert.alert("Error", "Failed to load mood details");
       navigation.goBack();
     } finally {
@@ -81,7 +81,7 @@ export default function DetailMoodScreen() {
       Alert.alert("Success", "Mood updated successfully!");
       navigation.goBack();
     } catch (error) {
-      console.error("Error updating mood:", error);
+      console.log("Error updating mood:", error);
       Alert.alert("Error", "Failed to update mood");
     } finally {
       setSaving(false);
@@ -126,7 +126,7 @@ export default function DetailMoodScreen() {
         },
       ]);
     } catch (error) {
-      console.error("Error deleting mood:", error);
+      console.log("Error deleting mood:", error);
       Alert.alert("Error", "Failed to delete mood");
       setSaving(false);
     }

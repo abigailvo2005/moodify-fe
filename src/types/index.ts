@@ -21,3 +21,12 @@ export interface Mood {
   isPrivate: boolean;
 }
 
+export interface ConnectingRequest {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  isAccepted: boolean;
+  status: string;
+  createdAt: string;
+}
+

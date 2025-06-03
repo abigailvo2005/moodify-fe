@@ -93,7 +93,7 @@ export default function ProfileScreen({ navigation }: any) {
       })
       .catch((error) => {
         Alert.alert("Oops!", "Failed to update profile.");
-        console.error(error);
+        console.log(error);
       });
   };
 

@@ -79,7 +79,7 @@ export const parseDate = (dateString:string) : Date => {
     return parsedDate;
     
   } catch (error) {
-    console.error('Error parsing date:', error);
+    console.log('Error parsing date:', error);
     return new Date(); 
   }
 };

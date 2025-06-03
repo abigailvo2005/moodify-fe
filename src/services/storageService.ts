@@ -12,7 +12,7 @@ export const StorageService = {
       await AsyncStorage.setItem(USER_KEY, jsonValue);
       console.log("User data saved to AsyncStorage:", jsonValue);
     } catch (e) {
-      console.error("Failed to save user", e);
+      console.log("Failed to save user", e);
     }
   },
 
@@ -22,7 +22,7 @@ export const StorageService = {
       const jsonValue = await AsyncStorage.getItem(USER_KEY);
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (e) {
-      console.error("Failed to get user", e);
+      console.log("Failed to get user", e);
       return null;
     }
   },
@@ -32,7 +32,7 @@ export const StorageService = {
     try {
       await AsyncStorage.removeItem(USER_KEY);
     } catch (e) {
-      console.error("Failed to remove user", e);
+      console.log("Failed to remove user", e);
     }
   },
 };

@@ -77,7 +77,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
         },
       ]);
     } catch (error) {
-      console.error("Error saving mood:", error);
+      console.log("Error saving mood:", error);
       Alert.alert("Oops!", "Something went wrong. Please try again 💔");
     }
   };

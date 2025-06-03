@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { getMoods, getFriends } from "../services/api";
+import { getMoods, getFriends, getUserById, getUsersByIds } from "../services/api";
 import { Mood, User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigation } from "@react-navigation/native";
@@ -44,11 +44,13 @@ export default function MoodListScreen({ navigation }: any) {
   const fetchFriends = async () => {
     try {
       if (user) {
-        const userFriends = await getFriends(user.id);
-        setFriends([user, ...userFriends]); // Include current user in the list
+        const userFriendsIds = user.friends ?? [];
+        const friendsData = await getUsersByIds(userFriendsIds);
+        const flatFriends = Array.isArray(friendsData) ? friendsData : [];
+        setFriends([user, ...flatFriends]); // Include current user in the list
       }
     } catch (error) {
-      console.error("Error fetching friends:", error);
+      console.log("Error fetching friends:", error);
     }
   };
 
@@ -66,7 +68,7 @@ export default function MoodListScreen({ navigation }: any) {
         setMoods(sortedMoods);
       }
     } catch (error) {
-      console.error("Error fetching moods:", error);
+      console.log("Error fetching moods:", error);
       Alert.alert("Error", "Failed to fetch moods");
     } finally {
       setLoading(false);
@@ -98,18 +100,28 @@ export default function MoodListScreen({ navigation }: any) {
 
   // Render each mood card
   const renderMoodCard = ({ item }: { item: Mood }) => {
-    return (
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate("MoodDetail", {
-            moodId: item.id,
-            onMoodUpdated: fetchMoods, // Callback to refresh moods after editing
-          })
-        }
-      >
-        <MoodCard mood={item} />
-      </TouchableOpacity>
-    );
+    const currentUserId = user?.id;
+
+    // Only show public mood to friends
+    if (
+      item.userId === currentUserId ||
+      (item.userId !== currentUserId && item.isPrivate === false)
+    ) {
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("MoodDetail", {
+              moodId: item.id,
+              onMoodUpdated: fetchMoods, // Callback to refresh moods after editing
+            })
+          }
+        >
+          <MoodCard mood={item} />
+        </TouchableOpacity>
+      );
+    }
+    // If not allowed to show, render nothing
+    return null;
   };
 
   // Prepare data for FlatList - this will include date separators and mood cards
@@ -199,7 +211,7 @@ export default function MoodListScreen({ navigation }: any) {
         {/* Friends Selection Dropdown */}
         <View style={styles.pickerContainer}>
           <Text style={styles.pickerLabel}>Viewing:</Text>
-          <View style={styles.pickerWrapper}>
+          <View>
             {/* Custom Dropdown TO Choose Friends */}
             <CustomModalPicker
               list={friends}

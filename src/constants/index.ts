@@ -10,12 +10,12 @@ export const ROUTES = {
 };
 
 export const QUESTIONS = [
-    "How are you feeling today?",
-    "What's your mood like right now?",
-    "Ready to capture your emotions?",
-    "How would you describe your day?",
-    "What's bringing you joy today?",
-  ];
+  "How are you feeling today?",
+  "What's your mood like right now?",
+  "Ready to capture your emotions?",
+  "How would you describe your day?",
+  "What's bringing you joy today?",
+];
 
 export const CAROUSEL_ANIMATIONS = [
   require("../../assets/carousel/carousel-1.json"),
@@ -61,3 +61,22 @@ export const MOOD_ICONS = [
     animation: require("../../assets/scared-animation.json"),
   },
 ];
+
+export const REQUEST_STATUS = {
+  Accepted: {
+    label: "Accepted",
+    icon: "✅",
+  },
+  Waiting: {
+    label: "Waiting",
+    icon: "⏳",
+  },
+  Denied: {
+    label: "Denied",
+    icon: "❌",
+  },
+  Unknown: {
+    label: "Unknown",
+    icon: "❓",
+  }
+};

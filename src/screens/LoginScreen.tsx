@@ -43,7 +43,7 @@ export default function LoginScreen({ navigation }: any) {
         Alert.alert("Login failed", "Incorrect username or password");
       }
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
 

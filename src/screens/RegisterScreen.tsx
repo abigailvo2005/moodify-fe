@@ -83,7 +83,7 @@ export default function RegisterScreen({ navigation }: any) {
       Alert.alert("Success", "You Can Now Login");
       navigation.goBack();
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
 
