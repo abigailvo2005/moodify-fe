@@ -238,7 +238,7 @@ class SchemaMigration {
             "unknown",
           isAccepted,
           status: requestData.status || (isAccepted ? "accepted" : "pending"),
-          createdAt:
+          date:
             requestData.createdAt ||
             requestData.created_at ||
             requestData.timestamp ||

@@ -135,7 +135,7 @@ export default function ConnectFriendsScreen() {
       // Create a new Request
       const newRequest: ConnectingRequest = {
         id: uuid.v4(),
-        createdAt: formatDate(new Date(), false),
+        date: formatDate(new Date(), false),
         senderId: currentUserId,
         receiverId: receiver.id,
         isAccepted: false,
@@ -236,7 +236,7 @@ export default function ConnectFriendsScreen() {
   // To show 1 incoming request card
   const renderIncomingRequest = (request: ConnectingRequest) => {
     // find the corresponding sender in sender list to display
-    console.log(incomingUsers);
+    console.log('incomingUsers: ', incomingUsers);
     const sender = incomingUsers.find((user) => user.id === request.senderId);
     console.log(sender);
 
@@ -248,7 +248,7 @@ export default function ConnectFriendsScreen() {
             <Text style={styles.userHandle}>@{sender?.username || "none"}</Text>
           </View>
           <Text style={styles.requestDate}>
-            {request.createdAt || "No Date"}
+            {request.date || "No Date"}
           </Text>
         </View>
 
@@ -285,7 +285,9 @@ export default function ConnectFriendsScreen() {
   // To show 1 sent request card
   const renderSentRequest = (request: ConnectingRequest) => {
     // find the corresponding receiver in receiver list to display
+    console.log('sentUsers: ', sentUsers);
     const receiver = sentUsers.find((user) => user.id === request.receiverId);
+    console.log('receiver: ', receiver);
 
     return (
       <View key={request.id} style={styles.requestCard}>
@@ -297,7 +299,7 @@ export default function ConnectFriendsScreen() {
             </Text>
           </View>
           <Text style={styles.requestDate}>
-            {request.createdAt || "No Date"}
+            {request.date  || "No Date"}
           </Text>
         </View>
 

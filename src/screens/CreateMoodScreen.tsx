@@ -66,7 +66,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
         isPrivate,
       };
 
-      await createMood(user?.id, moodIcon, moodDescription, reason, new Date().toISOString, isPrivate);
+      await createMood(newMood);
       console.log("Mood saved successfully!");
 
       Alert.alert("Yay! 🎉", "Your mood has been saved successfully!", [

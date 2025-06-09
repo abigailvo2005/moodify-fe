@@ -158,23 +158,9 @@ export const getMoods = async (userId: string): Promise<any[]> => {
 };
 
 // Create a new mood for a user
-export const createMood = async (
-  userId: string,
-  mood: string,
-  description: string,
-  reason: string,
-  date: string,
-  isPrivate: boolean
-): Promise<any | null> => {
+export const createMood = async (mood: any): Promise<any | null> => {
   try {
-    const newMood = await firestoreService.create(COLLECTIONS.MOODS, {
-      userId,
-      mood,
-      description,
-      reason,
-      date,
-      isPrivate
-    });
+    const newMood = await firestoreService.create(COLLECTIONS.MOODS, mood);
     return newMood;
   } catch (error) {
     console.log("Creating mood failed:", error);

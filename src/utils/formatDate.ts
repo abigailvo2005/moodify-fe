@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 // convert from Date to date String obj
 export const formatDate = (
   dateInput: string | Date,
@@ -82,5 +84,19 @@ export const parseDate = (dateString:string) : Date => {
     console.log('Error parsing date:', error);
     return new Date(); 
   }
+};
+
+export const convertTimestamps = <T>(data:any) : T => {
+  const converted = { ...data };
+  
+  // Convert Firestore timestamps to JavaScript Dates
+  if (converted.createdAt && converted.createdAt instanceof Timestamp) {
+    converted.createdAt = converted.createdAt.toDate();
+  }
+  if (converted.updatedAt && converted.updatedAt instanceof Timestamp) {
+    converted.updatedAt = converted.updatedAt.toDate();
+  }
+  
+  return converted as T;
 };
 

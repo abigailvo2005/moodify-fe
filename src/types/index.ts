@@ -1,6 +1,6 @@
 
 export interface User {
-  id: string;
+  id?: string;
   name: string;
   username: string;
   password: string;
@@ -10,8 +10,8 @@ export interface User {
 }
 
 export interface Mood {
-  id: string;
-  userId: string;
+  id?: string;
+  userId: string | undefined;
   mood: string;
   description: string;
   reason: string;
@@ -25,6 +25,6 @@ export interface ConnectingRequest {
   receiverId: string;
   isAccepted: boolean;
   status: string;
-  createdAt: string;
+  date: string;
 }
 
