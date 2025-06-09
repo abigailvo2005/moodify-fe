@@ -1,4 +1,3 @@
-import { createContext } from "react";
 
 export interface User {
   id: string;
@@ -8,7 +7,6 @@ export interface User {
   dob: string;
   referralCode: string;
   friends?: string[];
-  token?: string; // Optional, for JWT
 }
 
 export interface Mood {

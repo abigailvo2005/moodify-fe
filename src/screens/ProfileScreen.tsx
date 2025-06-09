@@ -15,7 +15,7 @@ import { User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { CustomDatePicker } from "../components/CustomDatePicker";
 import { formatDate, parseDate } from "../utils/formatDate";
-import { isUsernameExisted, updateUser } from "../services/api";
+import { isUsernameExisted, updateUser } from "../services/apiSwitch";
 
 export default function ProfileScreen({ navigation }: any) {
   const [name, setName] = useState("");
@@ -66,7 +66,7 @@ export default function ProfileScreen({ navigation }: any) {
     }
 
     // Existed username Validation
-    if (await isUsernameExisted(username.trim()), user?.id) {
+    if (await isUsernameExisted(username.trim(), user?.id)) {
        Alert.alert("Oops! 😅", "This username has already been taken. Please choose another one!");
       return;
     }

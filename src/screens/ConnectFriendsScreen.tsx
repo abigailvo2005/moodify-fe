@@ -26,7 +26,7 @@ import {
   getUsersFromRequests,
   hasPendingRequest,
   resendDeniedRequest,
-} from "../services/api";
+} from "../services/apiSwitch";
 import { ConnectingRequest, User } from "../types/index";
 import { formatDate } from "../utils/formatDate";
 

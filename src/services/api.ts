@@ -374,6 +374,7 @@ export const addFriendsByRequestId = async (requestId: string) => {
       })
     ]);
 
+
     return true;
   } catch (error) {
     console.log("Adding friends by requestId failed:", error);

@@ -17,7 +17,7 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { MOOD_ICONS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
-import { deleteMood, getMoodById, updateMood } from "../services/api";
+import { deleteMood, getMoodById, updateMood } from "../services/apiSwitch";
 import { Mood } from "../types";
 import { formatDate } from "../utils/formatDate";
 
@@ -36,6 +36,7 @@ export default function DetailMoodScreen() {
 
   // Fetch mood details when the component mounts or moodId changes - this ensures we always have the latest mood data and can handle cases where the user navigates back to this screen after editing.
   useEffect(() => {
+    console.log(moodId);
     fetchMoodDetail();
   }, [moodId]);
 
@@ -44,6 +45,7 @@ export default function DetailMoodScreen() {
     try {
       setLoading(true);
       const moodData = await getMoodById(moodId);
+      console.log(moodData);
       setMood(moodData);
       setMoodIcon(mood?.mood || null); // Set initial mood icon based on the fetched mood
       setEditedMood(moodData);

@@ -8,10 +8,9 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { getMoods, getFriends, getUserById, getUsersByIds } from "../services/api";
+import { getMoods, getFriends, getUserById, getUsersByIds } from "../services/apiSwitch";
 import { Mood, User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigation } from "@react-navigation/native";
 import MoodCard from "../components/MoodCard";
 import Icon from "react-native-vector-icons/Ionicons";
 import { formatDate } from "../utils/formatDate";
@@ -110,10 +109,11 @@ export default function MoodListScreen({ navigation }: any) {
       return (
         <TouchableOpacity
           onPress={() =>
+            {console.log(item.id);
             navigation.navigate("MoodDetail", {
               moodId: item.id,
               onMoodUpdated: fetchMoods, // Callback to refresh moods after editing
-            })
+            })}
           }
         >
           <MoodCard mood={item} />

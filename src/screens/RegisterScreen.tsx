@@ -18,7 +18,7 @@ import {
   checkReferralCode,
   isUsernameExisted,
   registerUser,
-} from "../services/api";
+} from "../services/apiSwitch";
 import { User } from "../types";
 import { formatDate } from "../utils/formatDate";
 import { GradientButton } from "../components/GradientButton";
@@ -69,14 +69,12 @@ export default function RegisterScreen({ navigation }: any) {
       }
 
       const newUser: User = {
-        id: uuid.v4(),
         name,
         username,
         password,
         dob: formattedDob,
         referralCode: referralCode,
         friends: [],
-        token: "", // Optional, for JWT
       };
 
       await registerUser(newUser);
@@ -87,9 +85,6 @@ export default function RegisterScreen({ navigation }: any) {
     }
   };
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
 
   return (
     <KeyboardAvoidingView

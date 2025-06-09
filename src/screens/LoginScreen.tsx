@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-import { loginUser } from "../services/api";
+import { loginUser } from "../services/apiSwitch";
 import LottieView from "lottie-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import TypewriterText from "../components/TypeWriterText";

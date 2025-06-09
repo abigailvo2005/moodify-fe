@@ -17,7 +17,7 @@ import {
 import uuid from "react-native-uuid";
 import { MOOD_ICONS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
-import { createMood } from "../services/api";
+import { createMood } from "../services/apiSwitch";
 import { Mood } from "../types";
 
 const { width } = Dimensions.get("window");
@@ -58,7 +58,6 @@ const CreateMoodScreen = ({ navigation }: any) => {
 
       //
       const newMood: Mood = {
-        id: uuid.v4(),
         userId: user ? user.id : "",
         mood: moodIcon || "",
         description: moodDescription,
@@ -67,7 +66,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
         isPrivate,
       };
 
-      await createMood(newMood);
+      await createMood(user?.id, moodIcon, moodDescription, reason, new Date().toISOString, isPrivate);
       console.log("Mood saved successfully!");
 
       Alert.alert("Yay! 🎉", "Your mood has been saved successfully!", [
