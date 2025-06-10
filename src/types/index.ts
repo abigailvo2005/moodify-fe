@@ -20,7 +20,7 @@ export interface Mood {
 }
 
 export interface ConnectingRequest {
-  id: string;
+  id?: string;
   senderId: string;
   receiverId: string;
   isAccepted: boolean;

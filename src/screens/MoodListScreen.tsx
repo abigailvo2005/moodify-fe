@@ -8,7 +8,12 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { getMoods, getFriends, getUserById, getUsersByIds } from "../services/apiSwitch";
+import {
+  getMoods,
+  getFriends,
+  getUserById,
+  getUsersByIds,
+} from "../services/apiSwitch";
 import { Mood, User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import MoodCard from "../components/MoodCard";
@@ -108,13 +113,12 @@ export default function MoodListScreen({ navigation }: any) {
     ) {
       return (
         <TouchableOpacity
-          onPress={() =>
-            {console.log(item.id);
+          onPress={() => {
             navigation.navigate("MoodDetail", {
               moodId: item.id,
               onMoodUpdated: fetchMoods, // Callback to refresh moods after editing
-            })}
-          }
+            });
+          }}
         >
           <MoodCard mood={item} />
         </TouchableOpacity>
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   headerContainer: {
-    flexDirection: "row", 
+    flexDirection: "row",
     justifyContent: "space-between",
   },
   header: {

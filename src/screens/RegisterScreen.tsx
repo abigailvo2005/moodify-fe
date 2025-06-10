@@ -49,7 +49,6 @@ export default function RegisterScreen({ navigation }: any) {
       do {
         referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         isExist = await checkReferralCode(referralCode);
-        console.log("Generated referral code:", referralCode);
       } while (isExist);
       // Check if the referral code already exists
 

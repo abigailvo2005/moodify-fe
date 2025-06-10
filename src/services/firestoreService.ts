@@ -140,7 +140,7 @@ class FirestoreService {
         id: doc.id,
         ...doc.data(),
       }))) as T[];
-    } catch (error) {
+    } catch (error : any) {
       console.log(`❌ Error querying ${collectionName}:`, error);
       console.log("Error details:", {
         code: error.code,

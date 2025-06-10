@@ -85,7 +85,6 @@ export default function ProfileScreen({ navigation }: any) {
     // update user in db
     await updateUser(user?.id || "", editedUser)
       .then(() => {
-        console.log("Updated:", editedUser);
         Alert.alert("Yay! 🎉", "Your profile has been updated successfully!");
 
         // update user info in local storage

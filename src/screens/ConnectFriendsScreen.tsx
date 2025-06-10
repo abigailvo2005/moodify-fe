@@ -105,7 +105,6 @@ export default function ConnectFriendsScreen() {
       return;
     }
 
-    console.log(referralCode);
     // Get info of receiver
     const receiver: User | null = await getUserByReferralCode(referralCode);
 
@@ -236,9 +235,7 @@ export default function ConnectFriendsScreen() {
   // To show 1 incoming request card
   const renderIncomingRequest = (request: ConnectingRequest) => {
     // find the corresponding sender in sender list to display
-    console.log('incomingUsers: ', incomingUsers);
     const sender = incomingUsers.find((user) => user.id === request.senderId);
-    console.log(sender);
 
     return (
       <View key={request.id} style={styles.requestCard}>
@@ -257,14 +254,14 @@ export default function ConnectFriendsScreen() {
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, styles.approveButton]}
-              onPress={() => handleApproveRequest(request.id)}
+              onPress={() => request.id && handleApproveRequest(request.id)}
               activeOpacity={0.8}
             >
               <Text style={styles.approveButtonText}>Accept 💕</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.denyButton]}
-              onPress={() => handleDenyRequest(request.id)}
+              onPress={() => request.id && handleDenyRequest(request.id)}
               activeOpacity={0.8}
             >
               <Text style={styles.denyButtonText}>Deny 👋</Text>
@@ -285,9 +282,7 @@ export default function ConnectFriendsScreen() {
   // To show 1 sent request card
   const renderSentRequest = (request: ConnectingRequest) => {
     // find the corresponding receiver in receiver list to display
-    console.log('sentUsers: ', sentUsers);
     const receiver = sentUsers.find((user) => user.id === request.receiverId);
-    console.log('receiver: ', receiver);
 
     return (
       <View key={request.id} style={styles.requestCard}>
@@ -313,7 +308,7 @@ export default function ConnectFriendsScreen() {
           {request.status === REQUEST_STATUS.Denied.label && (
             <TouchableOpacity
               style={styles.resendButton}
-              onPress={() => handleResendRequest(request.id)}
+              onPress={() => request.id && handleResendRequest(request.id)}
               activeOpacity={0.8}
             >
               <Text style={styles.resendButtonText}>Resend 🔄</Text>
@@ -343,7 +338,9 @@ export default function ConnectFriendsScreen() {
                       onPress: async () => {
                         try {
                           setIsLoading(true);
-                          await deleteRequest(request.id);
+                          if (request.id) {
+                            await deleteRequest(request.id);
+                          }
                           setIsLoading(false);
                           Alert.alert(
                             "Deleted",

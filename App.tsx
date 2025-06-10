@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { customFonts } from "./src/utils/fonts";
-import './src/services/migrationCommands';
-
 
 export default function App() {
 

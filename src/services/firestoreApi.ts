@@ -69,8 +69,6 @@ export const isUsernameExisted = async (
       { field: "username", operator: "==", value: username },
     ]);
 
-    console.log(userId);
-
     if (users.length > 0) {
       // If userId is provided, skip if the username belongs to the same user
       if (userId) {
@@ -245,7 +243,13 @@ export const hasPendingRequest = async (
   try {
     const requests = await firestoreService.queryWhere<ConnectingRequest>(
       COLLECTIONS.REQUESTS,
-      [{ field: "status", operator: "==", value: REQUEST_STATUS.Waiting.label }]
+      [
+      { 
+        field: "status", 
+        operator: "in", 
+        value: [REQUEST_STATUS.Waiting.label, REQUEST_STATUS.Accepted.label] 
+      }
+      ]
     );
 
     // Check for both directions
@@ -253,7 +257,7 @@ export const hasPendingRequest = async (
       (req) =>
         ((req.senderId === userAId && req.receiverId === userBId) ||
           (req.senderId === userBId && req.receiverId === userAId)) &&
-        req.status === REQUEST_STATUS.Waiting.label
+        req.status === REQUEST_STATUS.Waiting.label || req.status === REQUEST_STATUS.Accepted.label
     );
   } catch (error) {
     console.log("Checking pending request failed:", error);
@@ -263,7 +267,7 @@ export const hasPendingRequest = async (
 
 // Create connecting request
 export const createConnectingRequest = async (
-  request: Omit<ConnectingRequest, "id">
+  request: ConnectingRequest
 ): Promise<ConnectingRequest | null> => {
   try {
     const newRequest = await firestoreService.create<ConnectingRequest>(
@@ -320,9 +324,6 @@ export const getUsersFromRequests = async (
           .filter(Boolean)
       )
     );
-
-    console.log(userIds);
-    console.log(requests);
 
     return await getUsersByIds(userIds);
   } catch (error) {

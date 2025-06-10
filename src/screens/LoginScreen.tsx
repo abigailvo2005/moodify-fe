@@ -37,7 +37,6 @@ export default function LoginScreen({ navigation }: any) {
 
       if (res) {
         setUser(res);
-        console.log("Login User:", res);
         navigation.replace("App");
       } else {
         Alert.alert("Login failed", "Incorrect username or password");
