@@ -32,7 +32,7 @@ export default function MoodListScreen({ navigation }: any) {
   // Fetch friends and moods when the user is logged in
   useEffect(() => {
     if (user) {
-      setSelectedUserId(user.id);
+      setSelectedUserId(user?.id || "");
       fetchFriends();
     }
   }, [user]);

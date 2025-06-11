@@ -1,7 +1,7 @@
 // src/config/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 import { Platform } from "react-native";
 import { EXPO_PUBLIC_FIREBASE_API_KEY, EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN, EXPO_PUBLIC_FIREBASE_PROJECT_ID, EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET, EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, EXPO_PUBLIC_FIREBASE_APP_ID } from "@env";
 
@@ -34,5 +34,6 @@ export const COLLECTIONS = {
 
 // Firestore instance
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
-export default { db, COLLECTIONS };
+export default { db, COLLECTIONS, storage };

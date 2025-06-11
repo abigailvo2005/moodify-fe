@@ -10,13 +10,15 @@ export interface User {
 }
 
 export interface Mood {
-  id?: string;
-  userId: string | undefined;
+  id: string;
+  userId: string;
   mood: string;
   description: string;
   reason: string;
   date: string;
   isPrivate: boolean;
+  imageUrl?: string;     // ← ADD THIS - URL của ảnh từ Firebase Storage
+  hasImage?: boolean; 
 }
 
 export interface ConnectingRequest {
