@@ -32,7 +32,6 @@ export const registerUser = async (user: any) => {
         "Content-Type": "application/json",
       },
     });
-    console.log("User registered:", res.data);
     return res.data;
   } catch (error) {
     console.log("Registration failed:", error);
@@ -87,7 +86,7 @@ export const checkReferralCode = async (referralCode: string) => {
     }
     return null;
   } catch (error) {
-    //console.log("Checking referral code failed:", error);
+    console.log("Checking referral code failed:", error);
     return null;
   }
 };
@@ -292,8 +291,6 @@ export const getUsersFromRequests = async (
           .filter(Boolean)
       )
     );
-    console.log(userIds);
-    console.log(requests);
     const userPromises = userIds.map(id => axios.get(`${BASE_URL}/users/${id}`));
     const userResponses = await Promise.all(userPromises);
     return userResponses.map(res => res.data);
@@ -373,6 +370,7 @@ export const addFriendsByRequestId = async (requestId: string) => {
         headers: { "Content-Type": "application/json" }
       })
     ]);
+
 
     return true;
   } catch (error) {

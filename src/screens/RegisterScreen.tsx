@@ -18,7 +18,7 @@ import {
   checkReferralCode,
   isUsernameExisted,
   registerUser,
-} from "../services/api";
+} from "../services/apiSwitch";
 import { User } from "../types";
 import { formatDate } from "../utils/formatDate";
 import { GradientButton } from "../components/GradientButton";
@@ -49,7 +49,6 @@ export default function RegisterScreen({ navigation }: any) {
       do {
         referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         isExist = await checkReferralCode(referralCode);
-        console.log("Generated referral code:", referralCode);
       } while (isExist);
       // Check if the referral code already exists
 
@@ -69,14 +68,12 @@ export default function RegisterScreen({ navigation }: any) {
       }
 
       const newUser: User = {
-        id: uuid.v4(),
         name,
         username,
         password,
         dob: formattedDob,
         referralCode: referralCode,
         friends: [],
-        token: "", // Optional, for JWT
       };
 
       await registerUser(newUser);
@@ -87,9 +84,6 @@ export default function RegisterScreen({ navigation }: any) {
     }
   };
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
 
   return (
     <KeyboardAvoidingView

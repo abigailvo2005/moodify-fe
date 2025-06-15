@@ -15,9 +15,10 @@ import {
   View,
 } from "react-native";
 import uuid from "react-native-uuid";
+import { MoodCamera } from "../components/MoodCamera"; // ← ADD THIS IMPORT
 import { MOOD_ICONS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
-import { createMood } from "../services/api";
+import { createMood } from "../services/apiSwitch";
 import { Mood } from "../types";
 
 const { width } = Dimensions.get("window");
@@ -29,10 +30,18 @@ const CreateMoodScreen = ({ navigation }: any) => {
   const [reason, setReason] = useState("");
   const { user } = useAuth();
   const [isPrivate, setIsPrivate] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
 
   // Get the current selected mood icon data
   const getCurrentMoodIcon = () => {
     return MOOD_ICONS.find((icon) => icon.label === moodIcon) || MOOD_ICONS[0];
+  };
+
+  // ← ADD THIS FUNCTION to handle image changes
+  const handleImageChanged = (newImageUrl: string | undefined) => {
+    setImageUrl(newImageUrl);
+    console.log('📸 Image URL changed:', newImageUrl ? 'Image added' : 'Image removed');
   };
 
   // Function to handle mood creation - saving to db
@@ -49,36 +58,39 @@ const CreateMoodScreen = ({ navigation }: any) => {
     }
 
     try {
-      console.log("Mood saved:", {
-        moodIcon,
-        moodDescription,
-        reason,
-        isPrivate,
-      });
+      setSaving(true); // ← ADD THIS to show saving state
 
-      //
       const newMood: Mood = {
-        id: uuid.v4(),
-        userId: user ? user.id : "",
+        id: uuid.v4().toString(),
+        userId: user?.id || "no userId found",
         mood: moodIcon || "",
         description: moodDescription,
         reason,
         date: new Date().toISOString(),
         isPrivate,
+        imageUrl: imageUrl || undefined,
+        hasImage: Boolean(imageUrl),
       };
 
-      await createMood(newMood);
-      console.log("Mood saved successfully!");
+      console.log('💾 Saving mood with data:', newMood); // ← ADD DEBUG LOG
 
-      Alert.alert("Yay! 🎉", "Your mood has been saved successfully!", [
-        {
-          text: "Continue",
-          onPress: () => navigation.navigate("Tabs", { screen: "Mood" }),
-        },
-      ]);
+      await createMood(newMood);
+
+      Alert.alert(
+        "Yay! 🎉", 
+        imageUrl ? "Your mood captured in photo have been saved successfully!" : "Your mood has been saved successfully!", 
+        [
+          {
+            text: "Continue",
+            onPress: () => navigation.navigate("Tabs", { screen: "Mood" }),
+          },
+        ]
+      );
     } catch (error) {
       console.log("Error saving mood:", error);
       Alert.alert("Oops!", "Something went wrong. Please try again 💔");
+    } finally {
+      setSaving(false); // ← ADD THIS to reset saving state
     }
   };
 
@@ -193,6 +205,17 @@ const CreateMoodScreen = ({ navigation }: any) => {
             />
           </View>
 
+          {/* ← ADD CAMERA COMPONENT HERE */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>Add a photo 📸</Text>
+            <MoodCamera
+              userId={user?.id || "unknown"}
+              imageUrl={imageUrl}
+              onImageChanged={handleImageChanged}
+              disabled={saving}
+            />
+          </View>
+
           {/* Privacy Toggle */}
           <View style={styles.privacyContainer}>
             <View style={styles.privacyLabelContainer}>
@@ -218,18 +241,21 @@ const CreateMoodScreen = ({ navigation }: any) => {
 
         {/* Save Button */}
         <TouchableOpacity
-          style={[styles.saveButton, (!moodIcon && !moodDescription.trim()) && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            (!moodIcon || !moodDescription.trim() || saving) && styles.saveButtonDisabled,
+          ]}
           onPress={handleSave}
-          disabled={!moodIcon}
+          disabled={!moodIcon || !moodDescription.trim() || saving} // ← UPDATE DISABLED LOGIC
           activeOpacity={0.8}
         >
           <Text
             style={[
               styles.saveButtonText,
-              !moodIcon && styles.saveButtonTextDisabled,
+              (!moodIcon || saving) && styles.saveButtonTextDisabled,
             ]}
           >
-            Save My Mood 💕
+            {saving ? "Saving... 💫" : "Save My Mood 💕"} {/* ← ADD SAVING STATE TEXT */}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -451,6 +477,31 @@ const styles = StyleSheet.create({
 
   saveButtonTextDisabled: {
     color: "rgba(93, 22, 40, 0.4)",
+  },
+
+  // ← ADD DEBUG STYLES
+  debugInfo: {
+    backgroundColor: "rgba(243, 180, 196, 0.1)",
+    marginHorizontal: 24,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "rgba(243, 180, 196, 0.3)",
+  },
+
+  debugText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(93, 22, 40, 0.7)",
+    fontFamily: "Fredoka",
+  },
+
+  debugUrl: {
+    fontSize: 10,
+    color: "rgba(93, 22, 40, 0.5)",
+    fontFamily: "Fredoka",
+    marginTop: 4,
   },
 });
 

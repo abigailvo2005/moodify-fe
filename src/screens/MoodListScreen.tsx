@@ -8,10 +8,14 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { getMoods, getFriends, getUserById, getUsersByIds } from "../services/api";
+import {
+  getMoods,
+  getFriends,
+  getUserById,
+  getUsersByIds,
+} from "../services/apiSwitch";
 import { Mood, User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigation } from "@react-navigation/native";
 import MoodCard from "../components/MoodCard";
 import Icon from "react-native-vector-icons/Ionicons";
 import { formatDate } from "../utils/formatDate";
@@ -28,7 +32,7 @@ export default function MoodListScreen({ navigation }: any) {
   // Fetch friends and moods when the user is logged in
   useEffect(() => {
     if (user) {
-      setSelectedUserId(user.id);
+      setSelectedUserId(user?.id || "");
       fetchFriends();
     }
   }, [user]);
@@ -109,12 +113,12 @@ export default function MoodListScreen({ navigation }: any) {
     ) {
       return (
         <TouchableOpacity
-          onPress={() =>
+          onPress={() => {
             navigation.navigate("MoodDetail", {
               moodId: item.id,
               onMoodUpdated: fetchMoods, // Callback to refresh moods after editing
-            })
-          }
+            });
+          }}
         >
           <MoodCard mood={item} />
         </TouchableOpacity>
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   headerContainer: {
-    flexDirection: "row", 
+    flexDirection: "row",
     justifyContent: "space-between",
   },
   header: {

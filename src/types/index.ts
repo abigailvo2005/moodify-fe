@@ -1,14 +1,12 @@
-import { createContext } from "react";
 
 export interface User {
-  id: string;
+  id?: string;
   name: string;
   username: string;
   password: string;
   dob: string;
   referralCode: string;
   friends?: string[];
-  token?: string; // Optional, for JWT
 }
 
 export interface Mood {
@@ -19,14 +17,16 @@ export interface Mood {
   reason: string;
   date: string;
   isPrivate: boolean;
+  imageUrl?: string;     // ← ADD THIS - URL của ảnh từ Firebase Storage
+  hasImage?: boolean; 
 }
 
 export interface ConnectingRequest {
-  id: string;
+  id?: string;
   senderId: string;
   receiverId: string;
   isAccepted: boolean;
   status: string;
-  createdAt: string;
+  date: string;
 }
 
