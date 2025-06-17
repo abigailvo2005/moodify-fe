@@ -18,6 +18,7 @@ import { getMoods, getUsersByIds } from "../services/apiSwitch";
 import { Mood, User, LocationData } from "../types";
 import { MOOD_ICONS } from "../constants";
 import { formatDate } from "../utils/formatDate";
+import { useFocusEffect } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -100,11 +101,19 @@ export default function MapScreen({ navigation }: any) {
     longitudeDelta: 0.05,
   });
   const { user } = useAuth();
+  const mapRef = React.useRef<MapView>(null);
 
   useEffect(() => {
     fetchFriendsLocation();
     getCurrentLocation();
   }, [user]);
+
+  // Refetch friends' locations every time the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFriendsLocation();
+    }, [user])
+  );
 
   const getCurrentLocation = async () => {
     try {
@@ -129,6 +138,29 @@ export default function MapScreen({ navigation }: any) {
     }
   };
 
+  // Helper to focus map on current user's latest mood
+  const focusOnCurrentUserMood = () => {
+    const currentUserPin = friendMoodPins.find(
+      (pin) => pin.friend.id === user?.id
+    );
+    if (currentUserPin) {
+      mapRef.current?.animateToRegion(
+        {
+          latitude: currentUserPin.location.latitude,
+          longitude: currentUserPin.location.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        800 // duration in ms
+      );
+    } else {
+      Alert.alert(
+        "No mood location",
+        "You don't have a mood with location yet."
+      );
+    }
+  };
+
   const fetchFriendsLocation = async () => {
     try {
       setLoading(true);
@@ -141,7 +173,9 @@ export default function MapScreen({ navigation }: any) {
       }
 
       // Get all friends data + current user
-      const allUserIds = [...(user.friends || []), user.id].filter((id): id is string => id !== undefined);
+      const allUserIds = [...(user.friends || []), user.id].filter(
+        (id): id is string => id !== undefined
+      );
       const allUsers = await getUsersByIds(allUserIds);
 
       // Get all users' moods (including current user)
@@ -270,6 +304,7 @@ export default function MapScreen({ navigation }: any) {
           showsUserLocation={true}
           showsMyLocationButton={true}
           onRegionChangeComplete={setMapRegion}
+          ref={mapRef}
         >
           {friendMoodPins.map((pin, index) => (
             <Marker
@@ -314,6 +349,26 @@ export default function MapScreen({ navigation }: any) {
             size={24}
             color="rgba(93, 22, 40, 0.8)"
           />
+        </TouchableOpacity>
+
+        {/* Focus on Current User Mood Button */}
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            bottom: 24,
+            right: 24,
+            backgroundColor: "rgba(158, 77, 127, 0.9)",
+            borderRadius: 25,
+            padding: 14,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+          onPress={focusOnCurrentUserMood}
+        >
+          <Ionicons name="location" size={26} color="#fff" />
         </TouchableOpacity>
       </View>
 

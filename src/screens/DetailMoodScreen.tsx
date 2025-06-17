@@ -247,7 +247,7 @@ export default function DetailMoodScreen() {
       setIsEditing(false);
 
       if (onMoodUpdated) {
-        onMoodUpdated();
+        await onMoodUpdated();
       }
 
       Alert.alert("Success", "Mood updated successfully!");

@@ -21,6 +21,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { formatDate } from "../utils/formatDate";
 import CustomModalPicker from "../components/CustomModalPicker";
 import { ROUTES } from "../constants";
+import { useFocusEffect } from "expo-router";
 
 export default function MoodListScreen({ navigation }: any) {
   const [moods, setMoods] = useState<Mood[]>([]);
@@ -39,6 +40,15 @@ export default function MoodListScreen({ navigation }: any) {
       initializeScreen();
     }
   }, [user]);
+
+  // Auto-refresh moods when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      if (selectedUserId && friendsLoaded) {
+        fetchMoods();
+      }
+    }, [selectedUserId, friendsLoaded])
+  );
 
   // Fetch moods when the selected user changes (but not on initial load)
   useEffect(() => {
