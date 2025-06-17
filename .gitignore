@@ -61,8 +61,8 @@ android/build/
 Thumbs.db
 
 # Environment variables
-.env
-.env.*        # .env.local, .env.production...
+# .env
+# .env.*        # .env.local, .env.production...
 
 # Metro bundler cache
 metro-cache/
