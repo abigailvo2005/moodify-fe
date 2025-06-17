@@ -1,4 +1,3 @@
-
 export interface User {
   id?: string;
   name: string;
@@ -9,6 +8,14 @@ export interface User {
   friends?: string[];
 }
 
+// Location interface
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
+  name?: string; // Location name (e.g., "Starbucks Coffee", "Home", etc.)
+}
+
 export interface Mood {
   id: string;
   userId: string;
@@ -17,8 +24,10 @@ export interface Mood {
   reason: string;
   date: string;
   isPrivate: boolean;
-  imageUrl?: string;     // ← ADD THIS - URL của ảnh từ Firebase Storage
-  hasImage?: boolean; 
+  imageUrl?: string;
+  hasImage?: boolean;
+  location?: LocationData; // ← ADD: Optional location data
+  hasLocation?: boolean;   // ← ADD: Flag to indicate if mood has location
 }
 
 export interface ConnectingRequest {
@@ -29,4 +38,3 @@ export interface ConnectingRequest {
   status: string;
   date: string;
 }
-

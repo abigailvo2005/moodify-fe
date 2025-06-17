@@ -26,56 +26,135 @@ export default function MoodListScreen({ navigation }: any) {
   const [moods, setMoods] = useState<Mood[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isMoodsLoading, setIsMoodsLoading] = useState(false);
   const { user } = useAuth();
 
-  // Fetch friends and moods when the user is logged in
+  // Tính toán loading state tổng thể
+  const loading = isInitialLoading || isMoodsLoading;
+
+  // Fetch tất cả dữ liệu ban đầu khi user đăng nhập
   useEffect(() => {
     if (user) {
-      setSelectedUserId(user?.id || "");
-      fetchFriends();
+      loadInitialData();
     }
   }, [user]);
 
-  // Fetch moods when the selected user - friends changes
+  // Fetch moods khi selectedUserId thay đổi (không phải lần đầu)
   useEffect(() => {
-    if (selectedUserId) {
+    if (selectedUserId && !isInitialLoading) {
       fetchMoods();
     }
   }, [selectedUserId]);
 
-  // Fetch friends list and include the current user as "Me"
-  const fetchFriends = async () => {
+  // Function để load tất cả dữ liệu ban đầu
+  const loadInitialData = async () => {
     try {
-      if (user) {
-        const userFriendsIds = user.friends ?? [];
-        const friendsData = await getUsersByIds(userFriendsIds);
-        const flatFriends = Array.isArray(friendsData) ? friendsData : [];
-        setFriends([user, ...flatFriends]); // Include current user in the list
-      }
+      setIsInitialLoading(true);
+
+      if (!user) return;
+
+      // Bước 1: Fetch friends trước
+      console.log("Loading friends...");
+      const friendsResult = await fetchFriendsData();
+
+      // Bước 2: Set selectedUserId sau khi có friends
+      const initialUserId = user.id ?? '';
+      setSelectedUserId(initialUserId);
+
+      // Bước 3: Fetch moods cho user hiện tại
+      console.log("Loading initial moods...");
+      await fetchMoodsData(initialUserId);
+
+      console.log("All initial data loaded successfully");
     } catch (error) {
-      console.log("Error fetching friends:", error);
+      console.log("Error loading initial data:", error);
+      Alert.alert("Error", "Failed to load data");
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
-  // Fetch moods for the selected user
+  // Function để fetch friends data (trả về promise)
+  const fetchFriendsData = async (): Promise<User[]> => {
+    try {
+      if (!user) return [];
+
+      const userFriendsIds = user.friends ?? [];
+      const friendsData = await getUsersByIds(userFriendsIds);
+      const flatFriends = Array.isArray(friendsData) ? friendsData : [];
+      const allFriends = [user, ...flatFriends];
+
+      setFriends(allFriends);
+      return allFriends;
+    } catch (error) {
+      console.log("Error fetching friends:", error);
+      throw error;
+    }
+  };
+
+  // Function để fetch moods data (trả về promise)
+  const fetchMoodsData = async (userId: string): Promise<Mood[]> => {
+    try {
+      if (!userId) return [];
+
+      const userMoods = await getMoods(userId);
+      // Sort moods by date (newest first)
+      const sortedMoods = userMoods.sort(
+        (a: Mood, b: Mood) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      setMoods(sortedMoods);
+      return sortedMoods;
+    } catch (error) {
+      console.log("Error fetching moods:", error);
+      throw error;
+    }
+  };
+
+  // Function để fetch friends (wrapper cho UI calls)
+  const fetchFriends = async () => {
+    try {
+      await fetchFriendsData();
+    } catch (error) {
+      console.log("Error fetching friends:", error);
+      Alert.alert("Error", "Failed to fetch friends");
+    }
+  };
+
+  // Function để fetch moods (wrapper cho UI calls)
   const fetchMoods = async () => {
     try {
-      setLoading(true);
+      setIsMoodsLoading(true);
+
       if (selectedUserId) {
-        const userMoods = await getMoods(selectedUserId);
-        // Sort moods by date (newest first)
-        const sortedMoods = userMoods.sort(
-          (a: Mood, b: Mood) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setMoods(sortedMoods);
+        await fetchMoodsData(selectedUserId);
       }
     } catch (error) {
       console.log("Error fetching moods:", error);
       Alert.alert("Error", "Failed to fetch moods");
     } finally {
-      setLoading(false);
+      setIsMoodsLoading(false);
+    }
+  };
+
+  // Function để refresh tất cả dữ liệu
+  const refreshAllData = async () => {
+    try {
+      setIsMoodsLoading(true);
+
+      // Nếu cần refresh friends cũng có thể thêm vào đây
+      // await fetchFriendsData();
+
+      if (selectedUserId) {
+        await fetchMoodsData(selectedUserId);
+      }
+    } catch (error) {
+      console.log("Error refreshing data:", error);
+      Alert.alert("Error", "Failed to refresh data");
+    } finally {
+      setIsMoodsLoading(false);
     }
   };
 
@@ -242,7 +321,7 @@ export default function MoodListScreen({ navigation }: any) {
           contentContainerStyle={styles.listContainer}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           refreshing={loading}
-          onRefresh={fetchMoods}
+          onRefresh={refreshAllData}
         />
       )}
     </View>

@@ -1,23 +1,3 @@
-// import React from "react";
-// import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-// import HomeScreen from "../screens/HomeScreen";
-// import MoodListScreen from "../screens/MoodListScreen";
-// import ConnectFriendsScreen from "../screens/ConnectFriendsScreen";
-// import ProfileScreen from "../screens/ProfileScreen";
-
-// const Tab = createBottomTabNavigator();
-
-// export default function BottomTabNavigator() {
-//   return (
-//     <Tab.Navigator screenOptions={{ headerShown: false }} >
-//       <Tab.Screen name="Home" component={HomeScreen} />
-//       <Tab.Screen name="Moods" component={MoodListScreen} />
-//       <Tab.Screen name="Friends" component={ConnectFriendsScreen} />
-//       <Tab.Screen name="Profile" component={ProfileScreen} />
-//     </Tab.Navigator>
-//   );
-// }
-
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +5,7 @@ import HomeScreen from "../screens/HomeScreen";
 import MoodListScreen from "../screens/MoodListScreen";
 import ConnectFriendsScreen from "../screens/ConnectFriendsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import MapScreen from "../screens/MapScreen"; // ← ADD: Import MapScreen
 
 const Tab = createBottomTabNavigator();
 
@@ -39,6 +20,9 @@ export default function BottomTabNavigator() {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Mood") {
             iconName = focused ? "heart" : "heart-outline";
+          } else if (route.name === "Map") {
+            // ← ADD: Map tab icon
+            iconName = focused ? "map" : "map-outline";
           } else if (route.name === "Friends") {
             iconName = focused ? "people" : "people-outline";
           } else if (route.name === "Profile") {
@@ -53,7 +37,7 @@ export default function BottomTabNavigator() {
         tabBarInactiveTintColor: "#a594b5", // Light purple/gray
         tabBarLabelStyle: {
           fontFamily: "FredokaSemiBold",
-          fontSize: 12,
+          fontSize: 10, // ← UPDATE: Reduce font size to fit 5 tabs
           marginTop: 5,
         },
         tabBarStyle: {
@@ -86,6 +70,13 @@ export default function BottomTabNavigator() {
         component={MoodListScreen}
         options={{
           tabBarLabel: "Moods",
+        }}
+      />
+      <Tab.Screen
+        name="Map"
+        component={MapScreen}
+        options={{
+          tabBarLabel: "Map",
         }}
       />
       <Tab.Screen

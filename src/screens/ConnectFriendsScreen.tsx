@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import uuid from "react-native-uuid";
 import { REQUEST_STATUS } from "../constants";
@@ -53,7 +54,7 @@ function getRequestStatusLabel(status: string): string {
 
 export default function ConnectFriendsScreen() {
   const [referralCode, setReferralCode] = useState("");
-  const [activeTab, setActiveTab] = useState<"incoming" | "sent">("incoming"); // "incoming" or "sent" tab is being selected
+  const [activeTab, setActiveTab] = useState<"incoming" | "sent">("incoming");
   const [incomingRequests, setIncomingRequests] = useState<ConnectingRequest[]>(
     []
   );
@@ -61,60 +62,61 @@ export default function ConnectFriendsScreen() {
   const [sentRequests, setSentRequests] = useState<ConnectingRequest[]>([]);
   const [sentUsers, setSentUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // ← NEW: Initial loading state
   const { user, setUser } = useAuth();
 
-  // get current ID to filter requests
   const currentUserId = user?.id || "";
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
-  // Fetch incoming/sent requests of current user
+  // ← UPDATED: Better loading management
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
       console.log("Fetching incoming requests...");
       console.log("Fetching sent requests...");
 
-      // Load all sent requests and corresponding users for this screen
-      const sentRequests = await getSentRequests(currentUserId);
-      setSentRequests(sentRequests);
+      // Fetch all data in parallel
+      const [sentRequestsData, incomingRequestsData] = await Promise.all([
+        getSentRequests(currentUserId),
+        getIncomingRequests(currentUserId),
+      ]);
 
-      // Get all receivers to load their information on request list
-      setSentUsers(await getUsersFromRequests(sentRequests, "receiver"));
+      setSentRequests(sentRequestsData);
+      setIncomingRequests(incomingRequestsData);
 
-      // Load all incoming requests and corresponding users for this screen
-      const incomingRequests = await getIncomingRequests(currentUserId);
-      setIncomingRequests(incomingRequests);
+      // Fetch users for requests in parallel
+      const [sentUsersData, incomingUsersData] = await Promise.all([
+        getUsersFromRequests(sentRequestsData, "receiver"),
+        getUsersFromRequests(incomingRequestsData, "sender"),
+      ]);
 
-      // Get all sender to load their information on request list
-      setIncomingUsers(await getUsersFromRequests(incomingRequests, "sender"));
-
-      setIsLoading(false);
+      setSentUsers(sentUsersData);
+      setIncomingUsers(incomingUsersData);
     } catch (error) {
       console.log("Error fetching requests:", error);
+      Alert.alert("Error", "Failed to load requests. Please try again.");
+    } finally {
       setIsLoading(false);
+      setIsInitialLoading(false); // ← Mark initial loading as complete
     }
   };
 
-  // Create Connect Request With Appropriate Code
   const handleConnect = async () => {
     if (!referralCode.trim()) {
       Alert.alert("Oops! 😅", "Please enter a referral code");
       return;
     }
 
-    // Get info of receiver
     const receiver: User | null = await getUserByReferralCode(referralCode);
 
-    // Ensure this receiver exists
     if (!receiver?.id) {
       Alert.alert("Oops! 😅", "We cannot find anyone with this referral code.");
       return;
     }
 
-    // Check if there's already a pending request between these users
     if (await hasPendingRequest(currentUserId, receiver.id)) {
       Alert.alert(
         "Request Already Exists! 🔄",
@@ -123,7 +125,6 @@ export default function ConnectFriendsScreen() {
       return;
     }
 
-    // Proceed to create request when everything passed validation
     try {
       setIsLoading(true);
       console.log(
@@ -131,26 +132,21 @@ export default function ConnectFriendsScreen() {
         referralCode
       );
 
-      // Create a new Request
       const newRequest: ConnectingRequest = {
         id: uuid.v4(),
         date: formatDate(new Date(), false),
         senderId: currentUserId,
         receiverId: receiver.id,
         isAccepted: false,
-        status: REQUEST_STATUS.Waiting.label, // waiting as intiated
+        status: REQUEST_STATUS.Waiting.label,
       };
 
-      // Call API
       await createConnectingRequest(newRequest);
       setIsLoading(false);
       Alert.alert("Yay! 🎉", "Connection request sent successfully!");
 
-      // Refresh page and reset referral code
       await fetchRequests();
       setReferralCode("");
-
-      // Switch tab to sent request
       setActiveTab("sent");
     } catch (error) {
       console.log("Error sending connection request:", error);
@@ -162,39 +158,29 @@ export default function ConnectFriendsScreen() {
     }
   };
 
-  // Action when user accept a request
   const handleApproveRequest = async (requestId: string) => {
     try {
       console.log("Approving request:", requestId);
-      // Change status of current request
       setIsLoading(true);
       await acceptRequest(requestId);
-
-      // Add receiverId/senderId to list of friends of current user
       await addFriendsByRequestId(requestId);
       setIsLoading(false);
 
       Alert.alert("You are now friends! 💕", "Check your friends' moods now!");
-
-      //refresh screen
       await fetchRequests();
 
-      // Refresh user info to reload new friend list
       const refreshedUser = await getUserById(currentUserId);
       setUser(refreshedUser);
-      
     } catch (error) {
       console.log("Error approving request:", error);
       Alert.alert("Oops! 😅", "Failed to accept request. Please try again.");
+      setIsLoading(false);
     }
   };
 
-  // Action when user denied a request
   const handleDenyRequest = async (requestId: string) => {
     try {
       console.log("Denying request:", requestId);
-
-      // Change status of current request - denied
       setIsLoading(true);
       await denyRequest(requestId);
       setIsLoading(false);
@@ -203,38 +189,41 @@ export default function ConnectFriendsScreen() {
         "Denied Request 👋",
         "You can still send them a request in the future!"
       );
-
-      //refresh screen
       await fetchRequests();
     } catch (error) {
       console.log("Error denying request:", error);
       Alert.alert("Oops! 😅", "Failed to deny request. Please try again.");
+      setIsLoading(false);
     }
   };
 
-  // Let a user resend their sent request if that request is denied
   const handleResendRequest = async (requestId: string) => {
     try {
       console.log("Resending request:", requestId);
-
-      // change request status
       setIsLoading(true);
       await resendDeniedRequest(requestId);
       setIsLoading(false);
 
       Alert.alert("Resent! 🔄", "Let's wait for the other user to respond!");
-
-      //refresh screen
       await fetchRequests();
     } catch (error) {
       console.log("Error resending request:", error);
       Alert.alert("Oops! 😅", "Failed to resend request. Please try again.");
+      setIsLoading(false);
     }
   };
 
-  // To show 1 incoming request card
+  // ← ADD: Show loading screen during initial load
+  if (isInitialLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="rgba(243, 180, 196, 0.8)" />
+        <Text style={styles.loadingText}>Loading connections...</Text>
+      </View>
+    );
+  }
+
   const renderIncomingRequest = (request: ConnectingRequest) => {
-    // find the corresponding sender in sender list to display
     const sender = incomingUsers.find((user) => user.id === request.senderId);
 
     return (
@@ -244,18 +233,16 @@ export default function ConnectFriendsScreen() {
             <Text style={styles.userName}>{sender?.name || "none"}</Text>
             <Text style={styles.userHandle}>@{sender?.username || "none"}</Text>
           </View>
-          <Text style={styles.requestDate}>
-            {request.date || "No Date"}
-          </Text>
+          <Text style={styles.requestDate}>{request.date || "No Date"}</Text>
         </View>
 
-        {/* If request is on waitlist, show action buttons (accept/deny) */}
         {request.status === REQUEST_STATUS.Waiting.label ? (
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, styles.approveButton]}
               onPress={() => request.id && handleApproveRequest(request.id)}
               activeOpacity={0.8}
+              disabled={isLoading} // ← ADD: Disable during loading
             >
               <Text style={styles.approveButtonText}>Accept 💕</Text>
             </TouchableOpacity>
@@ -263,6 +250,7 @@ export default function ConnectFriendsScreen() {
               style={[styles.actionButton, styles.denyButton]}
               onPress={() => request.id && handleDenyRequest(request.id)}
               activeOpacity={0.8}
+              disabled={isLoading} // ← ADD: Disable during loading
             >
               <Text style={styles.denyButtonText}>Deny 👋</Text>
             </TouchableOpacity>
@@ -279,9 +267,7 @@ export default function ConnectFriendsScreen() {
     );
   };
 
-  // To show 1 sent request card
   const renderSentRequest = (request: ConnectingRequest) => {
-    // find the corresponding receiver in receiver list to display
     const receiver = sentUsers.find((user) => user.id === request.receiverId);
 
     return (
@@ -293,9 +279,7 @@ export default function ConnectFriendsScreen() {
               @{receiver?.username || "none"}
             </Text>
           </View>
-          <Text style={styles.requestDate}>
-            {request.date  || "No Date"}
-          </Text>
+          <Text style={styles.requestDate}>{request.date || "No Date"}</Text>
         </View>
 
         <View style={styles.statusContainer}>
@@ -304,18 +288,17 @@ export default function ConnectFriendsScreen() {
             {getRequestStatusLabel(request.status)}
           </Text>
 
-          {/* If sent request was denied, allow user to resend that request */}
           {request.status === REQUEST_STATUS.Denied.label && (
             <TouchableOpacity
               style={styles.resendButton}
               onPress={() => request.id && handleResendRequest(request.id)}
               activeOpacity={0.8}
+              disabled={isLoading} // ← ADD: Disable during loading
             >
               <Text style={styles.resendButtonText}>Resend 🔄</Text>
             </TouchableOpacity>
           )}
 
-          {/* If sent request is still in waiting status, allow user to delete that request */}
           {request.status === REQUEST_STATUS.Waiting.label && (
             <TouchableOpacity
               style={[
@@ -357,7 +340,7 @@ export default function ConnectFriendsScreen() {
                 );
               }}
               activeOpacity={0.8}
-              disabled={isLoading}
+              disabled={isLoading} // ← ADD: Disable during loading
             >
               <Text
                 style={[
@@ -374,7 +357,6 @@ export default function ConnectFriendsScreen() {
     );
   };
 
-  // Main Component
   return (
     <KeyboardAvoidingView
       style={styles.screenContainer}
@@ -405,14 +387,19 @@ export default function ConnectFriendsScreen() {
               autoCapitalize="none"
             />
             <TouchableOpacity
-              style={styles.connectButton}
+              style={[
+                styles.connectButton,
+                isLoading && styles.connectButtonDisabled,
+              ]} // ← ADD: Visual feedback during loading
               onPress={handleConnect}
               activeOpacity={0.8}
               disabled={isLoading}
             >
-              <Text style={styles.connectButtonText}>
-                {isLoading ? "Sending..." : "Connect 💕"}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="rgba(93, 22, 40, 0.9)" />
+              ) : (
+                <Text style={styles.connectButtonText}>Connect 💕</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -498,6 +485,22 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  // ← ADD: Loading container styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingTop: 20,
+  },
+
+  loadingText: {
+    fontSize: 16,
+    color: "rgba(93, 22, 40, 0.7)",
+    fontFamily: "FredokaSemiBold",
+    marginTop: 16,
+  },
+
   header: {
     paddingHorizontal: 24,
     paddingVertical: 20,
@@ -565,6 +568,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+
+  // ← ADD: Disabled button style
+  connectButtonDisabled: {
+    backgroundColor: "rgba(243, 180, 196, 0.4)",
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   connectButtonText: {
