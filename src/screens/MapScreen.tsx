@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: "rgba(93, 22, 40, 0.7)",
-    fontFamily: "Fredoka",
+    fontFamily: "FredokaSemiBold",
     marginTop: 16,
   },
 

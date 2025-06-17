@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../contexts/AuthContext";
+import { aiService } from "../services/aiServices";
 
 interface ChatMessage {
   id: string;
@@ -45,66 +46,20 @@ export default function ChatBotScreen({ navigation }: any) {
 
   // Simple AI response generator (you can replace this with actual AI service)
   const generateAIResponse = async (userMessage: string): Promise<string> => {
-    // This is a simple mock AI response - replace with actual AI service
-    const responses = [
-      "I understand how you're feeling. It's completely normal to experience different emotions throughout the day. Tell me more about what's on your mind.",
-      "Thank you for sharing that with me. Your feelings are valid, and it's important to acknowledge them. What do you think might help you feel better?",
-      "That sounds like a challenging situation. Remember that it's okay to feel this way. Have you tried any coping strategies that have worked for you before?",
-      "I hear you. Sometimes talking about our feelings can be really helpful. What's one small thing that usually brings you comfort?",
-      "It's great that you're taking time to reflect on your emotions. Self-awareness is the first step toward emotional well-being. How long have you been feeling this way?",
-      "Your emotional journey is unique to you. What you're experiencing matters. Is there anything specific that triggered these feelings today?",
-      "Thank you for trusting me with your thoughts. Remember, it's okay to have ups and downs - that's part of being human. What would make today a little bit better for you?",
-    ];
+    try {
+      console.log("🤖 Generating AI response for:", userMessage);
 
-    // Simple keyword-based responses
-    const lowerMessage = userMessage.toLowerCase();
+      const response = await aiService.generateMoodResponse(
+        userMessage,
+        user?.name // Pass user name for personalization
+      );
 
-    if (
-      lowerMessage.includes("sad") ||
-      lowerMessage.includes("down") ||
-      lowerMessage.includes("depressed")
-    ) {
-      return "I'm sorry you're feeling sad. It's okay to feel this way sometimes. Would you like to talk about what might be causing these feelings? Sometimes sharing can help lighten the emotional load.";
+      console.log("✅ AI response generated");
+      return response;
+    } catch (error) {
+      console.error("❌ AI Error:", error);
+      return "I'm having trouble responding right now, but I'm still here to listen. Please try again in a moment. 💙";
     }
-
-    if (
-      lowerMessage.includes("happy") ||
-      lowerMessage.includes("good") ||
-      lowerMessage.includes("great")
-    ) {
-      return "I'm so glad to hear you're feeling happy! It's wonderful when we experience positive emotions. What's contributing to your good mood today? Celebrating these moments is important.";
-    }
-
-    if (
-      lowerMessage.includes("angry") ||
-      lowerMessage.includes("mad") ||
-      lowerMessage.includes("frustrated")
-    ) {
-      return "I can sense your frustration. Anger is a normal emotion that tells us something important needs attention. Would you like to explore what's behind these feelings? Sometimes understanding the 'why' can help.";
-    }
-
-    if (
-      lowerMessage.includes("anxious") ||
-      lowerMessage.includes("worried") ||
-      lowerMessage.includes("stress")
-    ) {
-      return "Anxiety can feel overwhelming, but you're not alone in this. Taking deep breaths and grounding yourself in the present moment can help. What's one thing you can see, hear, or feel right now that brings you calm?";
-    }
-
-    if (
-      lowerMessage.includes("tired") ||
-      lowerMessage.includes("exhausted") ||
-      lowerMessage.includes("drained")
-    ) {
-      return "Feeling tired can affect our whole mood. Are you getting enough rest? Sometimes emotional exhaustion is just as real as physical tiredness. What would help you recharge today?";
-    }
-
-    if (lowerMessage.includes("thank") || lowerMessage.includes("thanks")) {
-      return "You're very welcome! I'm here whenever you need someone to listen. Remember, taking care of your emotional well-being is just as important as taking care of your physical health. 💕";
-    }
-
-    // Default response
-    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const sendMessage = async () => {
