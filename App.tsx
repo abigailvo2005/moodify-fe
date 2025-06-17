@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { customFonts } from "./src/utils/fonts";
+import { ChatProvider } from "./src/contexts/ChatContext";
 
 export default function App() {
-
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   // Load custom fonts to use across app
@@ -19,7 +19,9 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <RootNavigator />
+      <ChatProvider>
+        <RootNavigator />
+      </ChatProvider>
     </AuthProvider>
   );
 }
