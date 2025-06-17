@@ -71,6 +71,16 @@ export default function DetailMoodScreen() {
     }
   };
 
+  const isEmptyLocation = (location?: LocationData) => {
+    if (!location) return true;
+    console.log(location);
+    return (
+      (location.address === "" || location.address === null) &&
+      (location.latitude === 0 || location.latitude === null) &&
+      (location.longitude === 0 || location.longitude === null)
+    );
+  };
+
   const handleImageSelection = () => {
     Alert.alert(
       "📸 Change Photo",
@@ -237,7 +247,7 @@ export default function DetailMoodScreen() {
       setIsEditing(false);
 
       if (onMoodUpdated) {
-        onMoodUpdated();
+        await onMoodUpdated();
       }
 
       Alert.alert("Success", "Mood updated successfully!");
@@ -401,7 +411,8 @@ export default function DetailMoodScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Image Section */}
-            {(imageUrl || isEditing) && (
+            {((imageUrl && imageUrl !== "No URL") ||
+              (isEditing && isOwner)) && (
               <View style={styles.imageCard}>
                 <Text style={styles.imageLabel}>Photo</Text>
 
@@ -477,7 +488,7 @@ export default function DetailMoodScreen() {
             <View style={styles.locationCard}>
               <Text style={styles.locationLabel}>Location</Text>
 
-              {mood.location ? (
+              {mood.location && !isEmptyLocation(mood.location) ? (
                 <View style={styles.locationContainer}>
                   {/* Location Info */}
                   <View style={styles.locationInfoContainer}>

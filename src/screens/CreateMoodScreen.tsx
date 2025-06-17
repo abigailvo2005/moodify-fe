@@ -77,10 +77,10 @@ const CreateMoodScreen = ({ navigation }: any) => {
         reason,
         date: new Date().toISOString(),
         isPrivate,
-        imageUrl: imageUrl || undefined,
+        imageUrl: imageUrl || "No URL",
         hasImage: Boolean(imageUrl),
-        location: location || undefined, // ← ADD: Include location
-        hasLocation: Boolean(location), // ← ADD: Include location flag
+        location: location || { latitude: 0, longitude: 0, address: "" },
+        hasLocation: Boolean(location),
       };
 
       console.log("💾 Saving mood with data:", newMood);
