@@ -9,12 +9,14 @@ import {
   Alert,
   Dimensions,
 } from "react-native";
-import MapView, { Marker, Callout } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import LottieView from "lottie-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { getMoods, getUsersByIds } from "../services/apiSwitch";
 import { Mood, User, LocationData } from "../types";
+import { MOOD_ICONS } from "../constants";
 import { formatDate } from "../utils/formatDate";
 
 const { width, height } = Dimensions.get("window");
@@ -25,6 +27,66 @@ interface FriendMoodPin {
   location: LocationData;
 }
 
+// Custom Mood Marker Component
+const MoodMarker = ({
+  pin,
+  onPress,
+}: {
+  pin: FriendMoodPin;
+  onPress: () => void;
+}) => {
+  // Find the corresponding mood icon
+  const moodIcon = MOOD_ICONS.find(
+    (icon) => icon.label.toLowerCase() === pin.mood.mood.toLowerCase()
+  );
+
+  const isCurrentUser = pin.friend.id === pin.friend.id; // You'll need to pass current user ID
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.moodMarkerContainer,
+        isCurrentUser && styles.currentUserMarker,
+      ]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {/* Background Circle */}
+      <View
+        style={[
+          styles.moodMarkerBackground,
+          { backgroundColor: getMoodColor(pin.mood.mood) },
+        ]}
+      >
+        {/* Mood Animation */}
+        {moodIcon && (
+          <LottieView
+            source={moodIcon.animation}
+            style={styles.moodAnimation}
+            autoPlay
+            loop
+          />
+        )}
+      </View>
+
+      {/* User Name */}
+      <View style={styles.moodMarkerNameContainer}>
+        <Text style={styles.moodMarkerName} numberOfLines={1}>
+          {pin.friend.name}
+        </Text>
+      </View>
+
+      {/* Pulse Effect */}
+      <View
+        style={[
+          styles.pulseEffect,
+          { backgroundColor: getMoodColor(pin.mood.mood) },
+        ]}
+      />
+    </TouchableOpacity>
+  );
+};
+
 export default function MapScreen({ navigation }: any) {
   const [friendMoodPins, setFriendMoodPins] = useState<FriendMoodPin[]>([]);
   const [friendsWithoutLocation, setFriendsWithoutLocation] = useState<User[]>(
@@ -34,8 +96,8 @@ export default function MapScreen({ navigation }: any) {
   const [mapRegion, setMapRegion] = useState({
     latitude: 10.7769, // Default to Ho Chi Minh City
     longitude: 106.7009,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
   });
   const { user } = useAuth();
 
@@ -59,8 +121,8 @@ export default function MapScreen({ navigation }: any) {
       setMapRegion({
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
       });
     } catch (error) {
       console.log("Error getting current location:", error);
@@ -72,33 +134,41 @@ export default function MapScreen({ navigation }: any) {
       setLoading(true);
 
       if (!user?.friends || user.friends.length === 0) {
+        // Also include current user's moods
+        await fetchUserMoods(user);
         setLoading(false);
         return;
       }
 
-      // Get all friends data
-      const friends = await getUsersByIds(user.friends);
+      // Get all friends data + current user
+      const allUserIds = [...(user.friends || []), user.id].filter((id): id is string => id !== undefined);
+      const allUsers = await getUsersByIds(allUserIds);
 
-      // Get all friends' moods
-      const friendMoodsPromises = friends.map(async (friend) => {
-        const moods = await getMoods(friend.id || "");
-        return { friend, moods };
+      // Get all users' moods (including current user)
+      const userMoodsPromises = allUsers.map(async (currentUser) => {
+        const moods = await getMoods(currentUser.id || "");
+        return { friend: currentUser, moods };
       });
 
-      const friendMoodsData = await Promise.all(friendMoodsPromises);
+      const userMoodsData = await Promise.all(userMoodsPromises);
 
       const pinsData: FriendMoodPin[] = [];
-      const friendsWithoutLocationData: User[] = [];
+      const usersWithoutLocationData: User[] = [];
 
-      friendMoodsData.forEach(({ friend, moods }) => {
-        // Filter for public moods with location
-        const publicMoodsWithLocation = moods.filter(
-          (mood: Mood) => !mood.isPrivate && mood.hasLocation && mood.location
-        );
+      userMoodsData.forEach(({ friend, moods }) => {
+        // Filter for public moods with location (or all moods if it's current user)
+        const moodsWithLocation = moods.filter((mood: Mood) => {
+          const isCurrentUser = friend.id === user.id;
+          return (
+            mood.hasLocation &&
+            mood.location &&
+            (isCurrentUser || !mood.isPrivate)
+          ); // Show private moods only for current user
+        });
 
-        if (publicMoodsWithLocation.length > 0) {
+        if (moodsWithLocation.length > 0) {
           // Get the latest mood with location
-          const latestMood = publicMoodsWithLocation.sort(
+          const latestMood = moodsWithLocation.sort(
             (a: Mood, b: Mood) =>
               new Date(b.date).getTime() - new Date(a.date).getTime()
           )[0];
@@ -109,13 +179,13 @@ export default function MapScreen({ navigation }: any) {
             location: latestMood.location!,
           });
         } else {
-          // Friend has no public moods with location
-          friendsWithoutLocationData.push(friend);
+          // User has no moods with location
+          usersWithoutLocationData.push(friend);
         }
       });
 
       setFriendMoodPins(pinsData);
-      setFriendsWithoutLocation(friendsWithoutLocationData);
+      setFriendsWithoutLocation(usersWithoutLocationData);
     } catch (error) {
       console.log("Error fetching friends location:", error);
       Alert.alert("Error", "Failed to load friends' locations");
@@ -124,10 +194,40 @@ export default function MapScreen({ navigation }: any) {
     }
   };
 
-  const handlePinPress = (pin: FriendMoodPin) => {
+  const fetchUserMoods = async (currentUser: any) => {
+    try {
+      const moods = await getMoods(currentUser.id || "");
+      const moodsWithLocation = moods.filter(
+        (mood: Mood) => mood.hasLocation && mood.location
+      );
+
+      if (moodsWithLocation.length > 0) {
+        const latestMood = moodsWithLocation.sort(
+          (a: Mood, b: Mood) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        )[0];
+
+        setFriendMoodPins([
+          {
+            friend: currentUser,
+            mood: latestMood,
+            location: latestMood.location!,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.log("Error fetching user moods:", error);
+    }
+  };
+
+  const handleMoodMarkerPress = (pin: FriendMoodPin) => {
+    const isCurrentUser = pin.friend.id === user?.id;
+
     Alert.alert(
-      `${pin.friend.name}'s Mood`,
-      `Feeling ${pin.mood.mood} at ${pin.location.name}\n\n"${pin.mood.description}"`,
+      `${isCurrentUser ? "Your" : pin.friend.name + "'s"} Mood`,
+      `Feeling ${pin.mood.mood} at ${pin.location.name}\n\n"${
+        pin.mood.description
+      }"\n\n${formatDate(pin.mood.date, false)}`,
       [
         { text: "Close", style: "cancel" },
         {
@@ -143,24 +243,11 @@ export default function MapScreen({ navigation }: any) {
     );
   };
 
-  const getMoodColor = (mood: string): string => {
-    const moodColors: { [key: string]: string } = {
-      Happy: "#4CAF50",
-      Sad: "#2196F3",
-      Excited: "#FF9800",
-      Angry: "#F44336",
-      Neutral: "#9E9E9E",
-      Tired: "#9C27B0",
-      Scared: "#795548",
-    };
-    return moodColors[mood] || "#9E9E9E";
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="rgba(243, 180, 196, 0.8)" />
-        <Text style={styles.loadingText}>Loading friends' moods...</Text>
+        <Text style={styles.loadingText}>Loading map...</Text>
       </View>
     );
   }
@@ -169,9 +256,9 @@ export default function MapScreen({ navigation }: any) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Friends Map</Text>
+        <Text style={styles.title}>Mood Map</Text>
         <Text style={styles.subtitle}>
-          See where your friends are feeling 💫
+          Discover the emotional landscape around you 💫
         </Text>
       </View>
 
@@ -191,33 +278,13 @@ export default function MapScreen({ navigation }: any) {
                 latitude: pin.location.latitude,
                 longitude: pin.location.longitude,
               }}
-              pinColor={getMoodColor(pin.mood.mood)}
-              onPress={() => handlePinPress(pin)}
+              anchor={{ x: 0.5, y: 0.5 }}
+              centerOffset={{ x: 0, y: 0 }}
             >
-              <View
-                style={[
-                  styles.customPin,
-                  { backgroundColor: getMoodColor(pin.mood.mood) },
-                ]}
-              >
-                <Text style={styles.pinMoodText}>
-                  {pin.mood.mood.charAt(0)}
-                </Text>
-              </View>
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutName}>{pin.friend.name}</Text>
-                  <Text style={styles.calloutMood}>
-                    Feeling {pin.mood.mood}
-                  </Text>
-                  <Text style={styles.calloutLocation}>
-                    {pin.location.name}
-                  </Text>
-                  <Text style={styles.calloutDate}>
-                    {formatDate(pin.mood.date, true)}
-                  </Text>
-                </View>
-              </Callout>
+              <MoodMarker
+                pin={pin}
+                onPress={() => handleMoodMarkerPress(pin)}
+              />
             </Marker>
           ))}
         </MapView>
@@ -230,30 +297,58 @@ export default function MapScreen({ navigation }: any) {
         >
           <Ionicons name="refresh" size={24} color="rgba(93, 22, 40, 0.8)" />
         </TouchableOpacity>
+
+        {/* Legend Button */}
+        <TouchableOpacity
+          style={styles.legendButton}
+          onPress={() => {
+            Alert.alert(
+              "Mood Colors",
+              "🟢 Happy\n🔵 Sad\n🟠 Excited\n🔴 Angry\n⚫ Neutral\n🟣 Tired\n🟤 Scared",
+              [{ text: "OK" }]
+            );
+          }}
+        >
+          <Ionicons
+            name="help-circle"
+            size={24}
+            color="rgba(93, 22, 40, 0.8)"
+          />
+        </TouchableOpacity>
       </View>
 
-      {/* Friends Without Location Section */}
+      {/* Users Without Location Section */}
       {friendsWithoutLocation.length > 0 && (
         <View style={styles.bottomSection}>
           <Text style={styles.bottomSectionTitle}>
-            Friends without shared location ({friendsWithoutLocation.length})
+            Users without mood locations ({friendsWithoutLocation.length})
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.friendsList}
           >
-            {friendsWithoutLocation.map((friend) => (
-              <View key={friend.id} style={styles.friendCard}>
-                <View style={styles.friendAvatar}>
-                  <Text style={styles.friendInitial}>
-                    {friend.name.charAt(0).toUpperCase()}
+            {friendsWithoutLocation.map((friend) => {
+              const isCurrentUser = friend.id === user?.id;
+              return (
+                <View key={friend.id} style={styles.friendCard}>
+                  <View
+                    style={[
+                      styles.friendAvatar,
+                      isCurrentUser && styles.currentUserAvatar,
+                    ]}
+                  >
+                    <Text style={styles.friendInitial}>
+                      {friend.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.friendName}>
+                    {isCurrentUser ? "You" : friend.name}
                   </Text>
+                  <Text style={styles.friendStatus}>No mood location</Text>
                 </View>
-                <Text style={styles.friendName}>{friend.name}</Text>
-                <Text style={styles.friendStatus}>No location shared</Text>
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
         </View>
       )}
@@ -261,42 +356,41 @@ export default function MapScreen({ navigation }: any) {
       {/* Empty State */}
       {friendMoodPins.length === 0 && friendsWithoutLocation.length === 0 && (
         <View style={styles.emptyContainer}>
-          <Ionicons
-            name="map-outline"
-            size={80}
-            color="rgba(93, 22, 40, 0.3)"
+          <LottieView
+            source={require("../../assets/carousel/carousel-1.json")} // Use one of your existing animations
+            style={styles.emptyAnimation}
+            autoPlay
+            loop
           />
-          <Text style={styles.emptyTitle}>No friends on the map yet</Text>
+          <Text style={styles.emptyTitle}>No moods on the map yet</Text>
           <Text style={styles.emptySubtext}>
-            When your friends share their moods with location, they'll appear
-            here!
+            Start sharing your mood with location to see it appear here!
           </Text>
+          <TouchableOpacity
+            style={styles.createMoodButton}
+            onPress={() => navigation.navigate("CreateMood")}
+          >
+            <Text style={styles.createMoodButtonText}>Create Mood</Text>
+          </TouchableOpacity>
         </View>
       )}
-
-      {/* Legend */}
-      <View style={styles.legend}>
-        <Text style={styles.legendTitle}>Mood Colors</Text>
-        <View style={styles.legendItems}>
-          {Object.entries({
-            Happy: "#4CAF50",
-            Sad: "#2196F3",
-            Excited: "#FF9800",
-            Angry: "#F44336",
-            Neutral: "#9E9E9E",
-            Tired: "#9C27B0",
-            Scared: "#795548",
-          }).map(([mood, color]) => (
-            <View key={mood} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: color }]} />
-              <Text style={styles.legendText}>{mood}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
     </View>
   );
 }
+
+// Helper function to get mood color
+const getMoodColor = (mood: string): string => {
+  const moodColors: { [key: string]: string } = {
+    Happy: "#4CAF50",
+    Sad: "#2196F3",
+    Excited: "#FF9800",
+    Angry: "#F44336",
+    Neutral: "#9E9E9E",
+    Tired: "#9C27B0",
+    Scared: "#795548",
+  };
+  return moodColors[mood] || "#9E9E9E";
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -353,10 +447,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  customPin: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  // Custom Mood Marker Styles
+  moodMarkerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  currentUserMarker: {
+    // Add special styling for current user if needed
+  },
+
+  moodMarkerBackground: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
@@ -368,50 +472,60 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-  pinMoodText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: "FredokaSemiBold",
+  moodAnimation: {
+    width: 40,
+    height: 40,
   },
 
-  calloutContainer: {
-    minWidth: 150,
-    padding: 8,
+  moodMarkerNameContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+    maxWidth: 80,
   },
 
-  calloutName: {
-    fontSize: 16,
+  moodMarkerName: {
+    fontSize: 12,
     fontWeight: "600",
     color: "rgba(93, 22, 40, 0.9)",
     fontFamily: "FredokaSemiBold",
-    marginBottom: 4,
+    textAlign: "center",
   },
 
-  calloutMood: {
-    fontSize: 14,
-    color: "rgba(93, 22, 40, 0.7)",
-    fontFamily: "Fredoka",
-    marginBottom: 2,
-  },
-
-  calloutLocation: {
-    fontSize: 12,
-    color: "rgba(93, 22, 40, 0.6)",
-    fontFamily: "Fredoka",
-    marginBottom: 2,
-  },
-
-  calloutDate: {
-    fontSize: 11,
-    color: "rgba(93, 22, 40, 0.5)",
-    fontFamily: "Fredoka",
+  pulseEffect: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    opacity: 0.3,
+    top: -10,
   },
 
   refreshButton: {
     position: "absolute",
     top: 16,
     right: 16,
+    backgroundColor: "rgba(243, 180, 196, 0.9)",
+    borderRadius: 25,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  legendButton: {
+    position: "absolute",
+    top: 16,
+    left: 16,
     backgroundColor: "rgba(243, 180, 196, 0.9)",
     borderRadius: 25,
     padding: 12,
@@ -459,6 +573,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
+  currentUserAvatar: {
+    backgroundColor: "rgba(158, 77, 127, 0.8)",
+  },
+
   friendInitial: {
     fontSize: 18,
     fontWeight: "600",
@@ -484,12 +602,12 @@ const styles = StyleSheet.create({
 
   emptyContainer: {
     position: "absolute",
-    top: "50%",
+    top: "30%",
     left: "50%",
     transform: [{ translateX: -width * 0.4 }, { translateY: -100 }],
     alignItems: "center",
     paddingHorizontal: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     padding: 30,
     shadowColor: "#000",
@@ -497,6 +615,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    width: width * 0.8,
+  },
+
+  emptyAnimation: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
   },
 
   emptyTitle: {
@@ -504,7 +629,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "rgba(93, 22, 40, 0.7)",
     fontFamily: "FredokaSemiBold",
-    marginTop: 16,
     marginBottom: 8,
     textAlign: "center",
   },
@@ -515,52 +639,20 @@ const styles = StyleSheet.create({
     fontFamily: "Fredoka",
     textAlign: "center",
     lineHeight: 20,
+    marginBottom: 20,
   },
 
-  legend: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  createMoodButton: {
+    backgroundColor: "rgba(243, 180, 196, 0.8)",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
   },
 
-  legendTitle: {
-    fontSize: 12,
+  createMoodButtonText: {
+    color: "rgba(93, 22, 40, 0.9)",
+    fontSize: 14,
     fontWeight: "600",
-    color: "rgba(93, 22, 40, 0.8)",
     fontFamily: "FredokaSemiBold",
-    marginBottom: 8,
-  },
-
-  legendItems: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-
-  legendText: {
-    fontSize: 10,
-    color: "rgba(93, 22, 40, 0.7)",
-    fontFamily: "Fredoka",
   },
 });

@@ -10,11 +10,16 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Keyboard,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../contexts/AuthContext";
 import { aiService } from "../services/aiServices";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const { height: screenHeight } = Dimensions.get("window");
 
 interface ChatMessage {
   id: string;
@@ -34,8 +39,36 @@ export default function ChatBotScreen({ navigation }: any) {
   ]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  // Keyboard listeners
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        // Auto scroll to bottom when keyboard shows
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // Auto scroll to bottom when new messages are added
@@ -132,11 +165,7 @@ export default function ChatBotScreen({ navigation }: any) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
+    <View style={[styles.container]}>
       <LinearGradient
         colors={["#deb9b6", "#9383c7"]}
         style={StyleSheet.absoluteFill}
@@ -165,8 +194,12 @@ export default function ChatBotScreen({ navigation }: any) {
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
+        contentContainerStyle={[
+          styles.messagesContent,
+          { paddingBottom: Math.max(keyboardHeight, 100) + 80 }, // Extra padding for keyboard
+        ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {messages.map((message) => (
           <View
@@ -218,40 +251,55 @@ export default function ChatBotScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      {/* Input Area */}
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Share your feelings..."
-            placeholderTextColor="rgba(93, 22, 40, 0.4)"
-            multiline
-            maxLength={500}
-            editable={!isLoading}
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
-            ]}
-            onPress={sendMessage}
-            disabled={!inputText.trim() || isLoading}
-          >
-            <Ionicons
-              name={isLoading ? "hourglass" : "send"}
-              size={20}
-              color={
-                !inputText.trim() || isLoading
-                  ? "rgba(93, 22, 40, 0.3)"
-                  : "rgba(93, 22, 40, 0.8)"
-              }
+      {/* Input Area - Fixed at bottom */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 45 : 45}
+      >
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              paddingBottom: 40,
+              marginBottom: Platform.OS === "android" ? keyboardHeight : 0,
+            },
+          ]}
+        >
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Share your feelings..."
+              placeholderTextColor="rgba(93, 22, 40, 0.4)"
+              multiline
+              maxLength={500}
+              editable={!isLoading}
+              onSubmitEditing={sendMessage}
+              blurOnSubmit={false}
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+              ]}
+              onPress={sendMessage}
+              disabled={!inputText.trim() || isLoading}
+            >
+              <Ionicons
+                name={isLoading ? "hourglass" : "send"}
+                size={20}
+                color={
+                  !inputText.trim() || isLoading
+                    ? "rgba(93, 22, 40, 0.3)"
+                    : "rgba(93, 22, 40, 0.8)"
+                }
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -265,11 +313,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingVertical: 16,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 255, 255, 0.2)",
+    paddingTop: 30,
   },
 
   backButton: {
@@ -316,7 +364,7 @@ const styles = StyleSheet.create({
   messagesContent: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingBottom: 20,
+    flexGrow: 1,
   },
 
   messageContainer: {
@@ -404,6 +452,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
   },
 
   inputWrapper: {
@@ -427,6 +477,7 @@ const styles = StyleSheet.create({
     fontFamily: "Fredoka",
     maxHeight: 100,
     paddingVertical: 8,
+    textAlignVertical: "top",
   },
 
   sendButton: {
