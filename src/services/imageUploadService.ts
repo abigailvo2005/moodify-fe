@@ -99,7 +99,7 @@ class SupabaseImageService {
       if (result.canceled) {
         return { 
           success: false, 
-          error: 'User canceled image selection' 
+          error: 'You have canceled image selection' 
         };
       }
 

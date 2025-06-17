@@ -6,8 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import {
   getMoods,
   getFriends,
@@ -27,57 +27,149 @@ export default function MoodListScreen({ navigation }: any) {
   const [friends, setFriends] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true); // Initial app load
+  const [friendsLoaded, setFriendsLoaded] = useState(false); // Track if friends are loaded
+  const [moodsLoaded, setMoodsLoaded] = useState(false); // Track if moods are loaded
   const { user } = useAuth();
 
   // Fetch friends and moods when the user is logged in
   useEffect(() => {
     if (user) {
       setSelectedUserId(user?.id || "");
-      fetchFriends();
+      initializeScreen();
     }
   }, [user]);
 
-  // Fetch moods when the selected user - friends changes
+  // Fetch moods when the selected user changes (but not on initial load)
   useEffect(() => {
-    if (selectedUserId) {
+    if (selectedUserId && friendsLoaded) {
       fetchMoods();
     }
-  }, [selectedUserId]);
+  }, [selectedUserId, friendsLoaded]);
 
-  // Fetch friends list and include the current user as "Me"
-  const fetchFriends = async () => {
+  // ← NEW: Combined initialization function
+  const initializeScreen = async () => {
     try {
-      if (user) {
-        const userFriendsIds = user.friends ?? [];
-        const friendsData = await getUsersByIds(userFriendsIds);
-        const flatFriends = Array.isArray(friendsData) ? friendsData : [];
-        setFriends([user, ...flatFriends]); // Include current user in the list
-      }
+      console.log("🔄 Initializing MoodListScreen...");
+      setInitialLoading(true);
+      setFriendsLoaded(false);
+      setMoodsLoaded(false);
+
+      // Step 1: Fetch friends first
+      console.log("📥 Fetching friends...");
+      await fetchFriends();
+
+      // Step 2: Then fetch moods (will be triggered by useEffect)
+      // The useEffect will handle this when friendsLoaded becomes true
     } catch (error) {
-      console.log("Error fetching friends:", error);
+      console.log("❌ Error initializing screen:", error);
+      Alert.alert("Error", "Failed to load data. Please try again.");
+      setInitialLoading(false);
     }
   };
 
-  // Fetch moods for the selected user
+  // ← UPDATED: Better friends fetching with completion tracking
+  const fetchFriends = async () => {
+    try {
+      console.log("👥 Starting fetchFriends...");
+      setLoading(true);
+
+      if (user) {
+        const userFriendsIds = user.friends ?? [];
+        console.log(`📋 User has ${userFriendsIds.length} friends`);
+
+        let friendsData: User[] = [];
+        if (userFriendsIds.length > 0) {
+          console.log("🔍 Fetching friends data...");
+          friendsData = await getUsersByIds(userFriendsIds);
+        }
+
+        const flatFriends = Array.isArray(friendsData) ? friendsData : [];
+        const allUsers = [user, ...flatFriends]; // Include current user in the list
+
+        console.log(`✅ Friends loaded: ${allUsers.length} total users`);
+        setFriends(allUsers);
+        setFriendsLoaded(true); // Mark friends as loaded
+      }
+    } catch (error) {
+      console.log("❌ Error fetching friends:", error);
+      Alert.alert("Error", "Failed to load friends");
+      setInitialLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ← UPDATED: Better moods fetching with completion tracking
   const fetchMoods = async () => {
     try {
+      console.log(`🎭 Starting fetchMoods for user: ${selectedUserId}`);
       setLoading(true);
+      setMoodsLoaded(false);
+
       if (selectedUserId) {
+        console.log("📥 Fetching moods from API...");
         const userMoods = await getMoods(selectedUserId);
+
         // Sort moods by date (newest first)
         const sortedMoods = userMoods.sort(
           (a: Mood, b: Mood) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
         );
+
+        console.log(`✅ Moods loaded: ${sortedMoods.length} moods`);
         setMoods(sortedMoods);
+        setMoodsLoaded(true); // Mark moods as loaded
+
+        // ← NEW: Only turn off initial loading when BOTH friends and moods are loaded
+        if (friendsLoaded && initialLoading) {
+          console.log("🎉 Initial loading complete!");
+          setInitialLoading(false);
+        }
       }
     } catch (error) {
-      console.log("Error fetching moods:", error);
+      console.log("❌ Error fetching moods:", error);
       Alert.alert("Error", "Failed to fetch moods");
+      setInitialLoading(false);
     } finally {
       setLoading(false);
     }
   };
+
+  // ← UPDATED: Enhanced loading screen with better messaging
+  if (initialLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="rgba(243, 180, 196, 0.8)" />
+        <Text style={styles.loadingText}>
+          {!friendsLoaded ? "Loading friends..." : "Loading moods..."}
+        </Text>
+        <Text style={styles.loadingSubtext}>
+          {!friendsLoaded
+            ? "Getting your connections..."
+            : `Fetching ${
+                friends.find((f) => f.id === selectedUserId)?.name || "user"
+              }'s moods...`}
+        </Text>
+      </View>
+    );
+  }
+
+  // ← NEW: Show error state if friends failed to load
+  if (friendsLoaded && friends.length === 0) {
+    return (
+      <View style={styles.errorContainer}>
+        <Icon name="alert-circle-outline" size={80} color="#F56565" />
+        <Text style={styles.errorTitle}>Unable to load friends</Text>
+        <Text style={styles.errorSubtext}>
+          Please check your connection and try again
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={initializeScreen}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Group moods by date
   const groupMoodsByDate = () => {
@@ -231,7 +323,7 @@ export default function MoodListScreen({ navigation }: any) {
       </View>
 
       {/* MOOD LIST */}
-      {moods.length === 0 ? (
+      {moods.length === 0 && moodsLoaded ? (
         renderEmptyState()
       ) : (
         <FlatList
@@ -241,8 +333,11 @@ export default function MoodListScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          refreshing={loading}
-          onRefresh={fetchMoods}
+          refreshing={loading && !initialLoading}
+          onRefresh={() => {
+            console.log("🔄 Manual refresh triggered");
+            fetchMoods();
+          }}
         />
       )}
     </View>
@@ -253,6 +348,87 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F9FA",
+  },
+
+  // Loading container styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    paddingTop: 20,
+  },
+
+  loadingText: {
+    fontSize: 18,
+    color: "rgba(93, 22, 40, 0.8)",
+    fontFamily: "FredokaSemiBold",
+    marginTop: 16,
+    textAlign: "center",
+  },
+
+  // ← NEW: Loading subtext
+  loadingSubtext: {
+    fontSize: 14,
+    color: "rgba(93, 22, 40, 0.6)",
+    fontFamily: "Fredoka",
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  // ← NEW: Error state styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    paddingHorizontal: 40,
+  },
+
+  errorTitle: {
+    fontSize: 20,
+    color: "#F56565",
+    fontFamily: "FredokaSemiBold",
+    marginTop: 16,
+    textAlign: "center",
+  },
+
+  errorSubtext: {
+    fontSize: 16,
+    color: "#718096",
+    fontFamily: "Fredoka",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+
+  retryButton: {
+    backgroundColor: "rgba(243, 180, 196, 0.8)",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    marginTop: 20,
+  },
+
+  retryButtonText: {
+    color: "rgba(93, 22, 40, 0.9)",
+    fontSize: 16,
+    fontFamily: "FredokaSemiBold",
+  },
+
+  // ← NEW: Refreshing indicator
+  refreshingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+  },
+
+  refreshingText: {
+    fontSize: 14,
+    color: "rgba(93, 22, 40, 0.7)",
+    fontFamily: "Fredoka",
+    marginLeft: 8,
   },
 
   // Button Styles
@@ -271,7 +447,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: 18,
-    fontFamily: "FredokaSemiBold", // Make sure this font is loaded
+    fontFamily: "FredokaSemiBold",
     color: "rgba(93, 22, 40, 0.72)",
     fontWeight: "600",
   },

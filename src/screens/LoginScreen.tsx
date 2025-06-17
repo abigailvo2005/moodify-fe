@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   welcomeContainer: {
-    marginBottom: height * -0.15,
+    marginBottom: height * -0.2,
     padding: 10,
     borderRadius: 10,
     marginTop: 20,
@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Pacifico",
     marginBottom: 3,
+    height:  height / 30,
   },
   welcomeAnimation: {
     width: width,
