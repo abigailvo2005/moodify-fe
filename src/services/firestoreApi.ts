@@ -255,8 +255,8 @@ export const hasPendingRequest = async (
     // Check for both directions
     return requests.some(
       (req) =>
-        ((req.senderId === userAId && req.receiverId === userBId) ||
-          (req.senderId === userBId && req.receiverId === userAId))
+        (req.senderId === userAId && req.receiverId === userBId) ||
+        (req.senderId === userBId && req.receiverId === userAId)
     );
   } catch (error) {
     console.log("Checking pending request failed:", error);
@@ -482,6 +482,57 @@ export const deleteRequest = async (requestId: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.log("Deleting request failed:", error);
+    return false;
+  }
+};
+
+// Delete a friend from list
+export const deleteFriend = async (
+  userId: string,
+  friendId: string
+): Promise<boolean> => {
+  try {
+    console.log(`🗑️ Deleting friend relationship: ${userId} <-> ${friendId}`);
+
+    // Get both users
+    const [user, friend] = await Promise.all([
+      getUserById(userId),
+      getUserById(friendId),
+    ]);
+
+    if (!user || !friend) {
+      throw new Error("User or friend not found");
+    }
+
+    // Remove each other from friends lists
+    const updatedUserFriends = Array.isArray(user.friends)
+      ? user.friends.filter((id: string) => id !== friendId)
+      : [];
+
+    const updatedFriendFriends = Array.isArray(friend.friends)
+      ? friend.friends.filter((id: string) => id !== userId)
+      : [];
+
+    // Use batch operation for atomic update
+    await firestoreService.batchWrite([
+      {
+        type: "update",
+        collection: COLLECTIONS.USERS,
+        id: userId,
+        data: { friends: updatedUserFriends },
+      },
+      {
+        type: "update",
+        collection: COLLECTIONS.USERS,
+        id: friendId,
+        data: { friends: updatedFriendFriends },
+      },
+    ]);
+
+    console.log("✅ Friend relationship deleted successfully");
+    return true;
+  } catch (error) {
+    console.log("❌ Deleting friend failed:", error);
     return false;
   }
 };

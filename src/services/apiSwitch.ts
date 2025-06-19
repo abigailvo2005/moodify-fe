@@ -30,6 +30,7 @@ interface APIService {
   resendDeniedRequest: typeof MockAPI.resendDeniedRequest;
   deleteRequest: typeof MockAPI.deleteRequest;
   getUsersByIds: typeof MockAPI.getUsersByIds;
+  deleteFriend: any;
 }
 
 // Feature flag to determine which API to use (Expo environment variables)
@@ -70,6 +71,7 @@ export const API: APIService = {
   getFriends: useFirebase
     ? (FirestoreAPI.getFriends as typeof MockAPI.getFriends)
     : MockAPI.getFriends,
+  deleteFriend: FirestoreAPI.deleteFriend,
 
   // Request operations
   hasPendingRequest: useFirebase
@@ -136,6 +138,7 @@ export const {
   resendDeniedRequest,
   deleteRequest,
   getUsersByIds,
+  deleteFriend
 } = API;
 
 export default API;
