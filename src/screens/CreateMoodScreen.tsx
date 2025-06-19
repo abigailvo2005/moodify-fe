@@ -62,7 +62,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
     }
 
     if (!moodDescription.trim()) {
-      Alert.alert("Oops! 😅", "Please at lease describe how are you feeling.");
+      Alert.alert("Oops! 😅", "Please at least describe how are you feeling.");
       return;
     }
 
@@ -281,7 +281,7 @@ const CreateMoodScreen = ({ navigation }: any) => {
           <Text
             style={[
               styles.saveButtonText,
-              (!moodIcon || saving) && styles.saveButtonTextDisabled,
+              (saving) && styles.saveButtonTextDisabled,
             ]}
           >
             {saving ? "Saving... 💫" : "Save My Mood 💕"}

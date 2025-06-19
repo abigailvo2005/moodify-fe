@@ -21,7 +21,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 // Welcome message constant
 const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
-  text: "Hello! I'm your AI mood companion 💫 I'm here to listen and help you understand your feelings better. Remember, after you log out, all of your chat history will be gone. How are you feeling today?",
+  text: "Hello! I'm your virtual companion 💫 I'm here to listen and help you understand your feelings better. Remember, after you log out, all of your chat history will be gone. Do you want to start with telling me how are you feeling? Or would you like to discover Moodify's features?",
   isUser: false,
   timestamp: new Date(),
 };

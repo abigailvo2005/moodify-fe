@@ -1,5 +1,265 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { EXPO_PUBLIC_GOOGLE_AI_API_KEY } from "@env";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { APP_KNOWLEDGE, MOCK_RESPONSE } from "../constants";
+
+// Intent Detection
+const detectAppIntent = (message: string): string | null => {
+  const lowerMessage = message.toLowerCase();
+
+  // App guidance intents
+  if (
+    lowerMessage.includes("how to") ||
+    lowerMessage.includes("how do i") ||
+    lowerMessage.includes("how can i")
+  ) {
+    if (lowerMessage.includes("mood")) return "create_mood_help";
+    if (lowerMessage.includes("friend")) return "friends_help";
+    if (lowerMessage.includes("location")) return "location_help";
+    if (lowerMessage.includes("map")) return "map_help";
+    return "general_help";
+  }
+
+  // Feature questions
+  if (
+    lowerMessage.includes("what is") ||
+    lowerMessage.includes("what does") ||
+    lowerMessage.includes("explain")
+  ) {
+    if (lowerMessage.includes("moodify") || lowerMessage.includes("app"))
+      return "app_explanation";
+    if (lowerMessage.includes("referral")) return "referral_explanation";
+    if (lowerMessage.includes("private") || lowerMessage.includes("public"))
+      return "privacy_explanation";
+    return "feature_explanation";
+  }
+
+  // Navigation help
+  if (lowerMessage.includes("where") || lowerMessage.includes("find")) {
+    if (lowerMessage.includes("mood") || lowerMessage.includes("diary"))
+      return "navigation_moods";
+    if (lowerMessage.includes("friend")) return "navigation_friends";
+    if (lowerMessage.includes("profile")) return "navigation_profile";
+    if (lowerMessage.includes("map")) return "navigation_map";
+    return "navigation_help";
+  }
+
+  // Troubleshooting
+  if (
+    lowerMessage.includes("not working") ||
+    lowerMessage.includes("error") ||
+    lowerMessage.includes("problem")
+  ) {
+    return "troubleshooting";
+  }
+
+  // App-specific keywords
+  if (
+    lowerMessage.includes("moodify") ||
+    lowerMessage.includes("referral code") ||
+    lowerMessage.includes("mood diary") ||
+    lowerMessage.includes("mood map")
+  ) {
+    return "app_specific";
+  }
+
+  return null; // Not app-related, continue with normal emotional support
+};
+
+// ← Generate app-specific responses
+const generateAppResponse = (
+  intent: string,
+  originalMessage: string
+): string => {
+  const responses: { [key: string]: string } = {
+    app_explanation: `Moodify is your personal mood tracking companion! 💫 I help you:
+
+• Track emotions with 7 different moods (Happy, Sad, Excited, etc.)
+• Add context with photos, locations, and detailed descriptions  
+• Connect with friends to share your emotional journey
+• View mood patterns on your personal diary and map
+• Get AI support for understanding and managing your feelings
+
+What would you like to explore first? I can guide you through any feature! 🌟`,
+
+    create_mood_help: `Creating a mood is easy! Here's how: 📝
+
+1. Tap the "Add New Mood +" button (on Home screen or Moods tab)
+2. Choose your current emotion from 7 options 
+3. Describe what you're feeling - be as detailed as you like
+4. Add the reason - what caused this mood?
+5. Optional extras:
+   • 📸 Add a photo to capture the moment
+   • 📍 Add your location (current, search, or map)
+   • 🔒 Toggle privacy (private = only you see it)
+6. Tap "Save My Mood" 
+
+Your mood is now saved in your personal diary! Want me to walk you through any specific part? 💕`,
+
+    friends_help: `Connecting with friends makes mood tracking more meaningful! Here's how: 👥
+
+To add friends:
+1. Go to Friends tab 
+2. Get your friend's referral code (they find it in Profile tab)
+3. Enter their code and tap "Connect 💕"
+4. Wait for them to accept your request
+
+To share your code:
+1. Go to Profile tab
+2. Find your unique referral code 
+3. Tap "Copy" and share it with friends
+
+Managing requests:
+• Incoming tab - Accept/deny requests from others
+• Sent tab - See your pending requests
+
+Once connected, you can see their public moods on the map and in their diary! 🗺️✨`,
+
+    location_help: `Adding location to your moods helps track where you feel different emotions! 📍
+
+3 ways to add location:
+
+1. 📱 Current Location
+   • Tap "Add Location" → "Current Location"  
+   • App will use your GPS coordinates
+
+2. 🔍 Search Address *(New feature!)*
+   • Tap "Add Location" → "Search Address"
+   • Type any place name or address
+   • Select from dropdown suggestions
+
+3. 🗺️ Select on Map
+   • Tap "Add Location" → "Select on Map" 
+   • Tap anywhere on the map to pin location
+
+Note: The app will ask for location permission first. This helps create your personal mood map! 🌟`,
+
+    map_help: `The Mood Map shows where you and your friends felt different emotions! 🗺️
+
+Features:
+• Colored pins show different mood types
+• Your moods vs friends' public moods
+• Tap any pin to see mood details
+• Auto-focus on your latest mood location
+
+Navigation:
+• 🔄 Refresh button - Reload all mood locations  
+• ❓ Legend button - See what each color means
+• 📍 Focus button - Center on your latest mood (if you have one)
+
+Privacy: Only public moods appear on friends' maps. Your private moods only show on your own map! 🔒
+
+Want to add your first mood with location? 💫`,
+
+    navigation_help: `Here's how to navigate Moodify: 🧭
+
+Bottom tabs:
+• 🏠 Home - Main dashboard, create new moods
+• ❤️ Moods - Your mood diary and history  
+• 🗺️ Map - See mood locations on map
+• 👥 Friends - Connect and manage friends
+• 👤 Profile - Your settings and referral code
+
+Quick actions:
+• 💬 Chat bubble (floating) - Talk to me anytime!
+• + Add Mood buttons - Create new mood entries
+• Back arrows - Return to previous screens
+
+Where would you like to go? I can guide you step by step! 🌟`,
+
+    privacy_explanation: `Moodify gives you full control over your privacy! 🔒
+
+Private moods:
+• Only YOU can see them
+• Won't appear on friends' mood maps
+• Hidden from friends' view of your diary
+
+Public moods:  
+• Friends can see them in your diary
+• The latest one will appear on the shared mood map
+• Help friends understand your journey
+
+How to set privacy:
+• When creating/editing moods, toggle "Keep this private?"
+• Default is public to encourage sharing and support
+
+Your data: All moods (private/public) stay on your device and our secure servers. We never share personal information! 
+
+Need help adjusting privacy on existing moods? 💫`,
+
+    referral_explanation: `Referral codes help you connect safely with friends! 💎
+
+What it is:
+• A unique code generated just for you
+• Found in your Profile tab
+• Like a "friend invite code"
+
+How it works:
+1. Share your code with people you want to connect with
+2. They enter your code in their Friends tab  
+3. You get a connection request to accept/deny
+4. Once accepted - you're mood buddies! 
+
+Why referral codes?
+• Privacy - Only people you give your code to can find you
+• Control - You decide who to accept  
+• Safety - No random people can see your moods
+
+Your code is: Check your Profile tab! Want me to guide you there? 🌟`,
+
+    troubleshooting: `I'm here to help fix any issues! 🔧
+
+Common solutions:
+
+Location not working?
+• Check if you allowed location permission
+• Try restarting the app
+• Make sure GPS is enabled on your device
+
+Can't connect to friends? 
+• Double-check the referral code (case-sensitive)
+• Make sure you both have internet connection
+• Try refreshing the Friends tab
+
+Moods not saving?
+• Check your internet connection
+• Make sure you filled required fields (mood + description)
+• Try closing and reopening the app
+
+App running slowly?
+• Close other apps to free memory
+• Restart your device if needed
+
+What specific problem are you experiencing? I can provide more targeted help! 💕`,
+
+    general_help: `I'm here to help you with anything about Moodify! 🌟
+
+Popular questions:
+• "How do I create my first mood?"
+• "How do I add friends?"  
+• "How does the mood map work?"
+• "How do I add photos to moods?"
+• "What's a referral code?"
+
+Or try asking:
+• "Show me around the app"
+• "How do I change privacy settings?"
+• "Where do I find my mood history?"
+
+I can also provide emotional support and help you understand your feelings. What would you like to know? 💫`,
+
+    app_specific: `Yes, I know all about Moodify! I'm built right into the app to help you. 💫
+
+I can help with:
+• Using app features - step-by-step guidance
+• Emotional support - understanding your feelings  
+• Troubleshooting - fixing any issues
+• Best practices - getting the most from mood tracking
+
+What specifically would you like help with? Just ask naturally - I understand both emotions and app features! 🌟`,
+  };
+
+  return responses[intent] || responses.general_help;
+};
 
 class AIService {
   private genAI: GoogleGenerativeAI | null = null;
@@ -12,10 +272,8 @@ class AIService {
 
   private initializeAI() {
     try {
-      // Try to get API key from Constants (expo config)
       let apiKey = EXPO_PUBLIC_GOOGLE_AI_API_KEY;
 
-      // Fallback to environment variable
       if (!apiKey && process.env.EXPO_PUBLIC_GOOGLE_AI_API_KEY) {
         apiKey = process.env.EXPO_PUBLIC_GOOGLE_AI_API_KEY;
       }
@@ -29,9 +287,8 @@ class AIService {
       console.log("🔑 Google AI API key loaded successfully");
 
       this.genAI = new GoogleGenerativeAI(apiKey);
-      // Trong method initializeAI(), thay đổi dòng này:
       this.model = this.genAI.getGenerativeModel({
-        model: "gemini-1.5-flash", // 👈 Thay đổi ở đây
+        model: "gemini-1.5-flash",
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -52,6 +309,15 @@ class AIService {
     userMessage: string,
     userName?: string
   ): Promise<string> {
+    // ← Check if this is an app-related question first
+    const appIntent = detectAppIntent(userMessage);
+
+    if (appIntent) {
+      console.log("🎯 Detected app intent:", appIntent);
+      return generateAppResponse(appIntent, userMessage);
+    }
+
+    // Continue with normal emotional support if not app-related
     if (!this.model) {
       console.log("🔄 Using mock response (AI not available)");
       return this.getMockResponse(userMessage);
@@ -60,13 +326,11 @@ class AIService {
     try {
       console.log("🤖 Generating AI response...");
 
-      // Add user message to conversation history
       this.conversationHistory.push({
         role: "user",
         content: userMessage,
       });
 
-      // Keep only recent history (last 10 messages)
       if (this.conversationHistory.length > 10) {
         this.conversationHistory = this.conversationHistory.slice(-10);
       }
@@ -81,7 +345,6 @@ class AIService {
         throw new Error("Empty response from AI");
       }
 
-      // Add AI response to conversation history
       this.conversationHistory.push({
         role: "assistant",
         content: text.trim(),
@@ -92,7 +355,6 @@ class AIService {
     } catch (error) {
       console.error("❌ AI Service Error:", error);
 
-      // Check if it's a quota/rate limit error
       if (
         error &&
         typeof error === "object" &&
@@ -106,7 +368,6 @@ class AIService {
         );
       }
 
-      // Fallback to mock response for any other error
       return this.getMockResponse(userMessage);
     }
   }
@@ -114,9 +375,8 @@ class AIService {
   private createMoodPrompt(userMessage: string, userName?: string): string {
     const namePrefix = userName ? `${userName}, ` : "";
 
-    // Get recent conversation context
     const recentContext = this.conversationHistory
-      .slice(-6) // Last 6 messages for context
+      .slice(-6)
       .map((msg) => `${msg.role}: ${msg.content}`)
       .join("\n");
 
@@ -124,254 +384,107 @@ class AIService {
       ? `Recent conversation:\n${recentContext}\n\n`
       : "";
 
-    return `${contextPrefix}You are a caring, empathetic AI mood companion in a mood tracking app. Your role is to:
+    // ← Include app context in AI prompt
+    return `${contextPrefix}You are the AI companion built into Moodify, a mood tracking app. You have two main roles:
 
-🎯 PRIMARY GOALS:
-- Listen actively and validate emotions without judgment
-- Provide warm, supportive responses that feel genuinely caring
-- Ask thoughtful follow-up questions to encourage self-reflection
-- Suggest gentle, practical coping strategies when appropriate
-- Help users understand their emotions better
+🎯 PRIMARY ROLES:
+1. Emotional Support Companion: Listen actively, validate emotions, provide empathetic responses, ask thoughtful questions, suggest coping strategies
+2. App Guide & Assistant: Help users understand and use Moodify's features effectively
 
-💬 RESPONSE STYLE:
-- Keep responses between 50-100 words (conversational length)
-- Use a warm, friend-like tone (not clinical or overly formal)
-- Include appropriate emojis sparingly (1-2 per response)
+📱 APP CONTEXT - You know about Moodify:
+${JSON.stringify(APP_KNOWLEDGE, null, 2)}
+
+💬 RESPONSE GUIDELINES:
+- Keep responses 50-100 words for emotional support, longer for app guidance when needed
+- Try to include user's name in response for a mutual bonding experience
+- Use warm, friend-like tone (not clinical)
+- Include appropriate emojis (1-2 per response)
+- For app questions: Provide clear, step-by-step instructions
+- For emotional support: Focus on validation and gentle guidance
 - Ask ONE engaging follow-up question when relevant
-- Avoid giving medical advice or therapy
 
-🌱 EMOTIONAL SUPPORT APPROACH:
-- Acknowledge and normalize their feelings first
-- Show genuine curiosity about their experience
-- Offer perspective without dismissing their emotions
-- Suggest small, manageable self-care actions
-- Celebrate positive moments and progress
+🔍 CONTEXT AWARENESS:
+- If user asks about app features, provide specific Moodify guidance
+- If user shares emotions, focus on emotional support
+- You can reference previous conversations and their mood patterns
+- Help users connect app features to their emotional wellbeing
 
 Current user message: "${userMessage}"
 
-Please respond as a compassionate friend who genuinely cares about their emotional wellbeing. ${namePrefix}remember that sometimes the most powerful thing is simply being heard and understood.`;
+${namePrefix} respond as both a caring emotional companion AND knowledgeable app assistant. Help them with whatever they need most right now.`;
   }
 
   private getMockResponse(userMessage: string): string {
+    // ← Check for app intents in mock responses too
+    const appIntent = detectAppIntent(userMessage);
+
+    if (appIntent) {
+      return generateAppResponse(appIntent, userMessage);
+    }
+
+    // Continue with existing emotional mock responses
     const lowerMessage = userMessage.toLowerCase();
 
-    // Enhanced mock responses with more variety
-    const responses = {
-      sad: [
-        "I'm sorry you're feeling sad. Your feelings are completely valid, and it's okay to feel this way. Would you like to talk about what's weighing on your heart right now? Sometimes sharing can help lighten the emotional load. 💙",
-        "It sounds like you're going through a tough time. Sadness is such a deeply human emotion, and it shows how much you care. What's one small thing that usually brings you even a tiny bit of comfort? 🌙",
-        "I hear the sadness in your words, and I want you to know that you're not alone. These heavy feelings will pass, even though they feel overwhelming right now. How can I best support you today? 💜",
-      ],
+    const responses = MOCK_RESPONSE;
 
-      happy: [
-        "I'm so glad to hear you're feeling happy! It's wonderful when we experience those bright moments. What's bringing you joy today? I'd love to celebrate this positive energy with you! ✨",
-        "Your happiness is contagious - I can feel the positive energy in your message! These beautiful moments are so precious. What made today special for you? 😊",
-        "How wonderful that you're feeling happy! It's important to savor these golden moments. What's contributing to this lovely mood of yours? 🌟",
-      ],
-
-      angry: [
-        "I can sense your frustration, and that's completely understandable. Anger often tells us that something important needs our attention. Would you like to explore what's behind these feelings? Sometimes understanding the 'why' can help us move forward. 🌿",
-        "It sounds like something really got under your skin. Anger can be such a powerful emotion - it's your inner voice saying something matters to you. What's stirring up these intense feelings? 🔥",
-        "I hear the frustration in your words. Anger is often a signal that our boundaries or values have been crossed. Take a deep breath with me - what's really at the heart of this feeling? 💨",
-      ],
-
-      anxious: [
-        "Anxiety can feel overwhelming, but please know you're not alone in this. Right now, try to focus on your breathing - in for 4, hold for 4, out for 4. What's one small thing around you that brings you even a tiny bit of calm? 🕊️",
-        "I can feel the worry in your message. Anxiety has a way of making everything feel urgent and scary. You're safe right now in this moment. What's your mind focusing on that's causing this unease? 🌊",
-        "Those anxious feelings are so tough to carry. Your nervous system is trying to protect you, even though it might feel overwhelming. What's been weighing on your mind lately? 🫧",
-      ],
-
-      tired: [
-        "Feeling tired can really affect our whole mood and perspective. Are you getting enough rest, or is this more of an emotional exhaustion? Sometimes our hearts get tired too, and that's completely valid. What would help you recharge today? 💤",
-        "Exhaustion is your body and mind's way of asking for care. Whether it's physical or emotional tiredness, it deserves attention. What's been draining your energy lately? 🌙",
-        "I hear how drained you're feeling. Being tired - whether physically, emotionally, or mentally - is a signal to slow down and be gentle with yourself. What kind of rest do you need most right now? ✨",
-      ],
-
-      stressed: [
-        "Stress can feel like carrying the weight of the world. Take a moment to breathe with me. What's the biggest thing on your plate right now that's creating this pressure? 🌪️",
-        "I can sense the tension you're feeling. Stress often comes from juggling too many things at once. Let's break it down - what's feeling most overwhelming today? 🌿",
-        "That stressed feeling is so draining. Your mind is probably racing with everything you need to handle. What's one thing we could tackle together to lighten that load? 💆‍♀️",
-      ],
-
-      grateful: [
-        "Gratitude is such a beautiful emotion - it's like sunshine for the soul. I love that you're taking time to appreciate the good things. What's filling your heart with thankfulness today? 🌻",
-        "There's something magical about feeling grateful. It shifts our whole perspective, doesn't it? What wonderful thing happened that sparked this appreciation? ✨",
-        "Gratitude is one of my favorite emotions to witness. It shows how you're finding light even in ordinary moments. What's making you feel especially thankful? 🙏",
-      ],
-
-      confused: [
-        "Feeling confused can be really unsettling - like being in a fog where nothing seems clear. That's such a human experience though. What's got your mind all tangled up? 🌫️",
-        "Confusion often means we're processing something complex or new. It's okay not to have all the answers right now. What's the main thing that's feeling unclear to you? 🤔",
-        "When everything feels jumbled, it can be overwhelming. Take it one piece at a time. What's the biggest question mark in your mind today? 🧩",
-      ],
-
-      lonely: [
-        "Loneliness can feel so heavy, like being surrounded by silence. I want you to know that you're not truly alone - I'm here with you right now. What's making you feel most disconnected? 🤗",
-        "That lonely feeling is so difficult to sit with. Sometimes we can feel alone even when people are around. What kind of connection are you missing most? 💙",
-        "Loneliness is one of the hardest emotions to carry. You're reaching out though, and that takes courage. What would feeling more connected look like for you? 🌉",
-      ],
-
-      excited: [
-        "I can feel your excitement through your words! That energy is absolutely infectious. What's got you feeling so pumped up? I want to celebrate with you! 🎉",
-        "Your excitement is wonderful - like sparkles of joy! These moments of anticipation and energy are so precious. What's creating all this amazing buzz? ⚡",
-        "Excitement is such a delicious emotion! It's like your whole being is lighting up. Tell me what's got you feeling so wonderfully energized! 🌟",
-      ],
-
-      default: [
-        "Thank you for sharing with me. Your feelings matter, and I'm here to listen without judgment. Every emotion you experience is part of your unique human journey. What would feel most supportive for you right now? 💕",
-        "I appreciate you opening up about how you're feeling. There's something brave about putting emotions into words. What's the most important thing you want me to understand about what you're going through? 🌸",
-        "Whatever you're feeling right now is completely valid. Emotions are like weather - they come and go, each one teaching us something. How can I best support you in this moment? 🌈",
-        "Thank you for trusting me with your feelings. Every emotion - comfortable or uncomfortable - has something to tell us. What's your heart trying to communicate to you today? 💝",
-      ],
-    };
-
-    // Enhanced keyword matching with multiple categories
-    type MoodCategory =
-      | "sad"
-      | "happy"
-      | "angry"
-      | "anxious"
-      | "tired"
-      | "stressed"
-      | "grateful"
-      | "confused"
-      | "lonely"
-      | "excited"
-      | "default";
-    const getResponses = (category: MoodCategory) => {
-      const categoryResponses = responses[category];
-      return categoryResponses[
-        Math.floor(Math.random() * categoryResponses.length)
-      ];
-    };
-
-    // Sadness
+    // Use existing emotion detection logic
     if (
       lowerMessage.includes("sad") ||
       lowerMessage.includes("down") ||
-      lowerMessage.includes("depressed") ||
-      lowerMessage.includes("cry") ||
-      lowerMessage.includes("hurt")
+      lowerMessage.includes("depressed")
     ) {
-      return getResponses("sad");
+      return responses.sad[Math.floor(Math.random() * responses.sad.length)];
     }
 
-    // Happiness
     if (
       lowerMessage.includes("happy") ||
       lowerMessage.includes("good") ||
-      lowerMessage.includes("great") ||
-      lowerMessage.includes("amazing") ||
-      lowerMessage.includes("wonderful") ||
-      lowerMessage.includes("awesome")
+      lowerMessage.includes("great")
     ) {
-      return getResponses("happy");
+      return responses.happy[
+        Math.floor(Math.random() * responses.happy.length)
+      ];
     }
 
-    // Anger
     if (
       lowerMessage.includes("angry") ||
       lowerMessage.includes("mad") ||
-      lowerMessage.includes("frustrated") ||
-      lowerMessage.includes("annoyed") ||
-      lowerMessage.includes("furious")
+      lowerMessage.includes("frustrated")
     ) {
-      return getResponses("angry");
+      return responses.angry[
+        Math.floor(Math.random() * responses.angry.length)
+      ];
     }
 
-    // Anxiety
-    if (
-      lowerMessage.includes("anxious") ||
-      lowerMessage.includes("worried") ||
-      lowerMessage.includes("stress") ||
-      lowerMessage.includes("nervous") ||
-      lowerMessage.includes("panic")
-    ) {
-      return getResponses("anxious");
-    }
-
-    // Tiredness
-    if (
-      lowerMessage.includes("tired") ||
-      lowerMessage.includes("exhausted") ||
-      lowerMessage.includes("drained") ||
-      lowerMessage.includes("sleepy") ||
-      lowerMessage.includes("worn out")
-    ) {
-      return getResponses("tired");
-    }
-
-    // Stress (separate from anxiety)
-    if (
-      lowerMessage.includes("stress") ||
-      lowerMessage.includes("pressure") ||
-      lowerMessage.includes("overwhelm") ||
-      lowerMessage.includes("busy")
-    ) {
-      return getResponses("stressed");
-    }
-
-    // Gratitude
-    if (
-      lowerMessage.includes("grateful") ||
-      lowerMessage.includes("thankful") ||
-      lowerMessage.includes("appreciate") ||
-      lowerMessage.includes("blessed")
-    ) {
-      return getResponses("grateful");
-    }
-
-    // Confusion
-    if (
-      lowerMessage.includes("confused") ||
-      lowerMessage.includes("lost") ||
-      lowerMessage.includes("unclear") ||
-      lowerMessage.includes("don't understand")
-    ) {
-      return getResponses("confused");
-    }
-
-    // Loneliness
-    if (
-      lowerMessage.includes("lonely") ||
-      lowerMessage.includes("alone") ||
-      lowerMessage.includes("isolated") ||
-      lowerMessage.includes("disconnected")
-    ) {
-      return getResponses("lonely");
-    }
-
-    // Excitement
-    if (
-      lowerMessage.includes("excited") ||
-      lowerMessage.includes("thrilled") ||
-      lowerMessage.includes("pumped") ||
-      lowerMessage.includes("can't wait")
-    ) {
-      return getResponses("excited");
-    }
-
-    // Default responses
-    return getResponses("default");
+    return responses.default[
+      Math.floor(Math.random() * responses.default.length)
+    ];
   }
 
-  // Method to clear conversation history (for privacy)
   clearConversationHistory(): void {
     this.conversationHistory = [];
     console.log("🧹 Conversation history cleared");
   }
 
-  // Method to check if AI is available
   isAIAvailable(): boolean {
     return this.model !== null;
   }
 
-  // Method to get AI status for debugging
   getAIStatus(): { available: boolean; provider: string } {
     return {
       available: this.isAIAvailable(),
       provider: this.isAIAvailable() ? "Google Gemini" : "Mock Responses",
     };
+  }
+
+  // ← Get app knowledge for debugging
+  getAppKnowledge() {
+    return APP_KNOWLEDGE;
+  }
+
+  // ← Test app intent detection
+  testAppIntent(message: string) {
+    return detectAppIntent(message);
   }
 }
 

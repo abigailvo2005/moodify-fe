@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Pacifico",
     marginBottom: 3,
-    height:  height / 30,
+    height:  height / 20,
   },
   welcomeAnimation: {
     width: width,
