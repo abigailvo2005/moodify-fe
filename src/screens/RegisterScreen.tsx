@@ -1,19 +1,19 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
 import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
-  View,
-  StyleSheet,
-  Keyboard,
-  Platform,
+  View
 } from "react-native";
-import uuid from "react-native-uuid";
+import { CustomDatePicker } from "../components/CustomDatePicker";
+import { GradientButton } from "../components/GradientButton";
 import {
   checkReferralCode,
   isUsernameExisted,
@@ -21,10 +21,6 @@ import {
 } from "../services/apiSwitch";
 import { User } from "../types";
 import { formatDate } from "../utils/formatDate";
-import { GradientButton } from "../components/GradientButton";
-import { LinearGradient } from "expo-linear-gradient";
-import LottieView from "lottie-react-native";
-import { CustomDatePicker } from "../components/CustomDatePicker";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -83,7 +79,6 @@ export default function RegisterScreen({ navigation }: any) {
       console.log(err);
     }
   };
-
 
   return (
     <KeyboardAvoidingView
@@ -173,12 +168,14 @@ export default function RegisterScreen({ navigation }: any) {
               <View style={styles.buttonWrapper}>
                 <GradientButton text="Register" navFunc={handleRegister} />
               </View>
-              <View style={styles.buttonWrapper}>
-                <GradientButton
-                  text="Login"
-                  navFunc={() => navigation.navigate("Login")}
-                />
-              </View>
+              
+                <Text
+                  style={styles.loginLabel}
+                  onPress={() => navigation.navigate("Login")}
+                >
+                  Already have an account? Login here
+                </Text>
+              
             </View>
           </View>
         </View>
@@ -205,10 +202,10 @@ const styles = StyleSheet.create({
   },
 
   welcomeContainer: {
-    marginBottom: -100,
+    marginBottom: -200,
     padding: 10,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 30,
   },
   welcomeText: {
     fontSize: 45,
@@ -274,5 +271,12 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     borderRadius: 8,
     overflow: "hidden",
+  },
+  loginLabel: {
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 16,
+    fontFamily: "Fredoka",
   },
 });

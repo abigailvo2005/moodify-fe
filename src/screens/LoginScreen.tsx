@@ -110,12 +110,12 @@ export default function LoginScreen({ navigation }: any) {
               <View style={styles.buttonWrapper}>
                 <GradientButton text="Login" navFunc={handleLogin} />
               </View>
-              <View style={styles.buttonWrapper}>
-                <GradientButton
-                  text="Register"
-                  navFunc={() => navigation.navigate("Register")}
-                />
-              </View>
+                <Text
+                  style={styles.registerLabel}
+                  onPress={() => navigation.navigate("Register")}
+                >
+                  Don't have an account? Sign up here
+                </Text>
             </View>
           </View>
         </View>
@@ -152,14 +152,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontFamily: "Pacifico",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.6,
-    shadowRadius: 2,
-    elevation: 2,
   },
   welcomeSubText: {
     fontSize: 24,
@@ -167,7 +159,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Pacifico",
     marginBottom: 3,
-    height:  height / 20,
+    height: height / 20,
   },
   welcomeAnimation: {
     width: width,
@@ -217,5 +209,12 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     borderRadius: 8,
     overflow: "hidden",
+  },
+  registerLabel: {
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 16,
+    fontFamily: "Fredoka",
   },
 });

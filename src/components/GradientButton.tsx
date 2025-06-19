@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import { Shadow } from "react-native-shadow-2";
 
 // params for the button (text displayed and the screen to navigate to)
 interface GradientButtonProps {
@@ -9,38 +10,55 @@ interface GradientButtonProps {
 }
 
 // GradientButton component
-export const GradientButton = ({ text, navFunc, style }: GradientButtonProps) => {
+export const GradientButton = ({
+  text,
+  navFunc,
+  style,
+}: GradientButtonProps) => {
   return (
-    <TouchableOpacity
-      onPress={navFunc}
-      activeOpacity={0.7}
-      style={styles.button}
-    >
-      <LinearGradient
-        colors={["#deb9b6", "#c099c7", "#deb9b6"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }} // Diagonal gradient for diamond pattern effect
-        locations={[0, 0.5, 1]} // Control the gradient
-        style={[styles.gradient, style]}
+    <View style={styles.container}>
+      <Shadow
+        distance={10}
+        startColor={"#00000020"}
+        offset={[0, 4]}
+        style={styles.shadow}
       >
-        <Text style={styles.buttonText}>{text}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
+        <TouchableOpacity
+          onPress={navFunc}
+          activeOpacity={0.7}
+          style={styles.button}
+        >
+          <LinearGradient
+            colors={["#deb9b6", "#c099c7", "#deb9b6"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }} // Diagonal gradient for diamond pattern effect
+            locations={[0, 0.5, 1]} // Control the gradient
+            style={[styles.gradient, style]}
+          >
+            <Text style={styles.buttonText}>{text}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Shadow>
+    </View>
   );
 };
 
 /* STYLES */
 const styles = StyleSheet.create({
-  button: {
-    borderRadius: 1,
-    paddingVertical: 5,
+  container: {
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
   },
+
+  shadow: {
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+
+  button: {
+    paddingTop: 0,
+    paddingBottom: 3,
+  },
+
   buttonText: {
     fontFamily: "FredokaSemiBold",
     color: "#f2e9f7",
@@ -50,9 +68,10 @@ const styles = StyleSheet.create({
   },
   gradient: {
     paddingVertical: 10,
+    paddingHorizontal: 100,
     alignItems: "center",
     justifyContent: "center",
-    width: "80%",
+    width: "100%",
     borderRadius: 15,
   },
 });
