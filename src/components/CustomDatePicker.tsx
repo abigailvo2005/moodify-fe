@@ -69,7 +69,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React from "react";
 import { Dimensions, Modal, Platform, StyleSheet, View } from "react-native";
-import { shadowStyles } from "../utils/shadowUtils";
 import { GradientButton } from "./GradientButton";
 
 const { width, height } = Dimensions.get("window");
@@ -126,7 +125,7 @@ export const CustomDatePicker = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <View style={[styles.pickerContainer, shadowStyles.modal]}>
+          <View style={[styles.pickerContainer]}>
             <DateTimePicker
               value={dob}
               mode="date"
@@ -138,7 +137,6 @@ export const CustomDatePicker = ({
             <GradientButton
               text="OK"
               navFunc={toggleDatePicker}
-              style={styles.okButton}
             />
           </View>
         </View>

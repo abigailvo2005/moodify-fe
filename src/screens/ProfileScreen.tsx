@@ -1,4 +1,4 @@
-// src/screens/ProfileScreen.tsx 
+// src/screens/ProfileScreen.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -12,7 +12,6 @@ import {
   Platform,
   Clipboard,
 } from "react-native";
-import { User } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useChatHistory } from "../contexts/ChatContext"; // ← Import chat context
 import { CustomDatePicker } from "../components/CustomDatePicker";
@@ -207,7 +206,7 @@ export default function ProfileScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.updateButton}
             onPress={handleUpdate}
-            activeOpacity={0.8}
+            activeOpacity={0.5}
           >
             <Text style={styles.updateButtonText}>Update My Info 💕</Text>
           </TouchableOpacity>
@@ -322,28 +321,28 @@ const styles = StyleSheet.create({
   copyButton: {
     backgroundColor: "rgba(243, 180, 196, 0.8)",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    justifyContent: "center",
     borderRadius: 16,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
 
   copyButtonText: {
     color: "rgba(93, 22, 40, 0.9)",
     fontSize: 14,
-    fontWeight: "600",
+    paddingVertical: 17,
     fontFamily: "FredokaSemiBold",
   },
 
   updateButton: {
     backgroundColor: "rgba(243, 180, 196, 0.8)",
-    paddingVertical: 18,
+    height: 50,
     borderRadius: 25,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 32,
     marginBottom: 16,
     shadowColor: "#000",
@@ -355,7 +354,7 @@ const styles = StyleSheet.create({
 
   updateButtonText: {
     color: "rgba(93, 22, 40, 0.9)",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     fontFamily: "FredokaSemiBold",
   },
@@ -364,7 +363,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     borderWidth: 2,
     borderColor: "rgba(243, 180, 196, 0.6)",
-    paddingVertical: 16,
+    paddingVertical: 10,
     borderRadius: 25,
     alignItems: "center",
   },
@@ -373,7 +372,7 @@ const styles = StyleSheet.create({
     color: "rgba(93, 22, 40, 0.7)",
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "Fredoka",
+    fontFamily: "FredokaSemiBold",
   },
 
   bottomSpacing: {

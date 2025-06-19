@@ -28,37 +28,37 @@ export const MOOD_ICONS = [
   {
     name: "HAPPY",
     label: "Happy",
-    animation: require("../../assets/happy-animation.json"),
+    animation: require("../../assets/animations/happy-animation.json"),
   },
   {
     name: "SAD",
     label: "Sad",
-    animation: require("../../assets/sad-animation.json"),
+    animation: require("../../assets/animations/sad-animation.json"),
   },
   {
     name: "NEUTRAL",
     label: "Neutral",
-    animation: require("../../assets/neutral-animation.json"),
+    animation: require("../../assets/animations/neutral-animation.json"),
   },
   {
     name: "EXCITED",
     label: "Excited",
-    animation: require("../../assets/excited-animation.json"),
+    animation: require("../../assets/animations/excited-animation.json"),
   },
   {
     name: "ANGRY",
     label: "Angry",
-    animation: require("../../assets/angry-animation.json"),
+    animation: require("../../assets/animations/angry-animation.json"),
   },
   {
     name: "TIRED",
     label: "Tired",
-    animation: require("../../assets/tired-animation.json"),
+    animation: require("../../assets/animations/tired-animation.json"),
   },
   {
     name: "SCARED",
     label: "Scared",
-    animation: require("../../assets/scared-animation.json"),
+    animation: require("../../assets/animations/scared-animation.json"),
   },
 ];
 

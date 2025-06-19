@@ -68,7 +68,7 @@ export default function LoginScreen({ navigation }: any) {
         <View style={[styles.container, { minHeight: height }]}>
           <View style={styles.welcomeContainer}>
             <LottieView
-              source={require("../../assets/warm-welcome.json")}
+              source={require("../../assets/animations/warm-welcome.json")}
               style={styles.welcomeAnimation}
               autoPlay
               loop

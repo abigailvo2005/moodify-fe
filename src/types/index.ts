@@ -38,3 +38,10 @@ export interface ConnectingRequest {
   status: string;
   date: string;
 }
+
+// For Pin on Map
+export interface FriendMoodPin {
+  friend: User;
+  mood: Mood;
+  location: LocationData;
+}

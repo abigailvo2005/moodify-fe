@@ -244,11 +244,11 @@ export const hasPendingRequest = async (
     const requests = await firestoreService.queryWhere<ConnectingRequest>(
       COLLECTIONS.REQUESTS,
       [
-      { 
-        field: "status", 
-        operator: "in", 
-        value: [REQUEST_STATUS.Waiting.label, REQUEST_STATUS.Accepted.label] 
-      }
+        {
+          field: "status",
+          operator: "in",
+          value: [REQUEST_STATUS.Waiting.label, REQUEST_STATUS.Accepted.label],
+        },
       ]
     );
 
@@ -256,8 +256,7 @@ export const hasPendingRequest = async (
     return requests.some(
       (req) =>
         ((req.senderId === userAId && req.receiverId === userBId) ||
-          (req.senderId === userBId && req.receiverId === userAId)) &&
-        req.status === REQUEST_STATUS.Waiting.label || req.status === REQUEST_STATUS.Accepted.label
+          (req.senderId === userBId && req.receiverId === userAId))
     );
   } catch (error) {
     console.log("Checking pending request failed:", error);

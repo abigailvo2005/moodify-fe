@@ -567,14 +567,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
 
   // ← ADD: Disabled button style
   connectButtonDisabled: {
     backgroundColor: "rgba(243, 180, 196, 0.4)",
     shadowOpacity: 0,
-    elevation: 0,
   },
 
   connectButtonText: {
@@ -607,7 +605,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
 
   tabText: {

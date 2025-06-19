@@ -21,7 +21,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
   const [isWaiting, setIsWaiting] = useState(false);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
 
     if (isWaiting) {
       // Wait before starting to delete or type again

@@ -157,7 +157,7 @@ export default function MoodListScreen({ navigation }: any) {
         <Text style={styles.loadingSubtext}>
           {!friendsLoaded
             ? "Getting your connections..."
-            : `Fetching ${
+            : `Getting ${
                 friends.find((f) => f.id === selectedUserId)?.name || "user"
               }'s moods...`}
         </Text>
@@ -452,7 +452,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
     justifyContent: "center",
   },
   primaryButtonText: {

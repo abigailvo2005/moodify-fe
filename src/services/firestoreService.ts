@@ -20,7 +20,7 @@ import {
   DocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "./firebase"; // Make sure this imports the correct db instance
-import uuid from 'react-native-uuid';
+import uuid from "react-native-uuid";
 import { convertTimestamps } from "../utils/formatDate";
 
 type WhereCondition = {
@@ -61,7 +61,10 @@ class FirestoreService {
   }
 
   // CREATE new document
-  async create<T extends { id?: string }>(collectionName: string, data: T): Promise<T> {
+  async create<T extends { id?: string }>(
+    collectionName: string,
+    data: T
+  ): Promise<T> {
     try {
       const documentId = data.id ?? uuid.v4().toString(); // Generate a new ID if not provided
 
@@ -136,11 +139,13 @@ class FirestoreService {
         `✅ Query successful. Found ${snapshot.docs.length} documents`
       );
 
-      return snapshot.docs.map((doc) => (convertTimestamps({
-        id: doc.id,
-        ...doc.data(),
-      }))) as T[];
-    } catch (error : any) {
+      return snapshot.docs.map((doc) =>
+        convertTimestamps({
+          id: doc.id,
+          ...doc.data(),
+        })
+      ) as T[];
+    } catch (error: any) {
       console.log(`❌ Error querying ${collectionName}:`, error);
       console.log("Error details:", {
         code: error.code,

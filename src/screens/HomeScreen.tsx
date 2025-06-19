@@ -98,7 +98,7 @@ export default function HomeScreen({ navigation }: any) {
       {/* Bottom Wave Animation */}
       <View style={styles.bottomWaveContainer}>
         <LottieView
-          source={require("../../assets/wave.json")} // Replace with your wave animation
+          source={require("../../assets/animations/wave.json")} // Replace with your wave animation
           autoPlay
           loop
           style={styles.waveAnimation}
