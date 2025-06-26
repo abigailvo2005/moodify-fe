@@ -123,7 +123,7 @@ export default function DetailMoodScreen() {
       }
     } catch (error: any) {
       Alert.alert("Error", "Failed to take photo");
-      console.error("Take photo error:", error);
+      console.log("Take photo error:", error);
     } finally {
       setImageLoading(false);
     }
@@ -144,7 +144,7 @@ export default function DetailMoodScreen() {
       }
     } catch (error: any) {
       Alert.alert("Cancelled", "Failed to pick photo");
-      console.error("Pick photo error:", error);
+      console.log("Pick photo error:", error);
     } finally {
       setImageLoading(false);
     }

@@ -80,7 +80,7 @@ export default function ChatBotScreen({ navigation }: any) {
       console.log("✅ AI response generated");
       return response;
     } catch (error) {
-      console.error("❌ AI Error:", error);
+      console.log("❌ AI Error:", error);
       return "I'm having trouble responding right now, but I'm still here to listen. Please try again in a moment. 💙";
     }
   };

@@ -234,8 +234,7 @@ export const getFriends = async (userId: string): Promise<User[]> => {
 };
 
 // ========== CONNECTING REQUEST OPERATIONS ==========
-
-// Check if there's already a pending request between these users
+// ← Check if there's already a pending request between these users
 export const hasPendingRequest = async (
   userAId: string,
   userBId: string
@@ -252,7 +251,7 @@ export const hasPendingRequest = async (
       ]
     );
 
-    // Check for both directions
+    // Check for both directions (any pending or accepted request)
     return requests.some(
       (req) =>
         (req.senderId === userAId && req.receiverId === userBId) ||
@@ -264,19 +263,277 @@ export const hasPendingRequest = async (
   }
 };
 
-// Create connecting request
+// ← NEW: Check if user can send request (allows denied requests to be overridden)
+export const canSendRequest = async (
+  senderId: string,
+  receiverId: string
+): Promise<{ canSend: boolean; reason?: string }> => {
+  try {
+    console.log(`🔍 Checking if ${senderId} can send request to ${receiverId}`);
+
+    const requests = await firestoreService.queryWhere<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      [
+        {
+          field: "status",
+          operator: "in",
+          value: [REQUEST_STATUS.Waiting.label, REQUEST_STATUS.Accepted.label],
+        },
+      ]
+    );
+
+    // Check for any active request between these users
+    const existingRequest = requests.find(
+      (req) =>
+        (req.senderId === senderId && req.receiverId === receiverId) ||
+        (req.senderId === receiverId && req.receiverId === senderId)
+    );
+
+    if (existingRequest) {
+      if (existingRequest.status === REQUEST_STATUS.Accepted.label) {
+        return {
+          canSend: false,
+          reason: "You are already friends with this user",
+        };
+      }
+
+      if (existingRequest.status === REQUEST_STATUS.Waiting.label) {
+        if (existingRequest.senderId === senderId) {
+          return {
+            canSend: false,
+            reason: "You already have a pending request to this user",
+          };
+        } else {
+          return {
+            canSend: false,
+            reason:
+              "This user has already sent you a request. Please check your incoming requests.",
+          };
+        }
+      }
+    }
+
+    // Allow sending if no active request or only denied requests exist
+    return { canSend: true };
+  } catch (error) {
+    console.log("Error checking if can send request:", error);
+    return { canSend: false, reason: "Error checking request status" };
+  }
+};
+
+// ← UPDATED: Accept a connecting request with conflict resolution
+export const acceptRequest = async (
+  requestId: string
+): Promise<ConnectingRequest | null> => {
+  try {
+    console.log(`✅ Accepting request: ${requestId}`);
+
+    // Get the request details first
+    const request = await firestoreService.getById<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      requestId
+    );
+    if (!request) {
+      throw new Error("Request not found");
+    }
+
+    const { senderId, receiverId } = request;
+    console.log(`👥 Processing request: ${senderId} -> ${receiverId}`);
+
+    // ← NEW: Check for and handle opposing request
+    console.log("🔍 Checking for opposing requests...");
+    const allRequests = await firestoreService.queryWhere<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      [
+        {
+          field: "status",
+          operator: "==",
+          value: REQUEST_STATUS.Waiting.label,
+        },
+      ]
+    );
+
+    // Find opposing request (from receiverId to senderId)
+    const opposingRequest = allRequests.find(
+      (req) =>
+        req.id !== requestId && // Not the same request
+        req.senderId === receiverId &&
+        req.receiverId === senderId
+    );
+
+    if (opposingRequest && opposingRequest.id) {
+      console.log(
+        `🗑️ Found opposing request ${opposingRequest.id}, will delete it`
+      );
+    }
+
+    // ← NEW: Use batch operation to accept current request and delete opposing request
+    const batchOperations: Array<{
+      type: "update" | "delete";
+      collection: string;
+      id: string;
+      data?: any;
+    }> = [];
+
+    // Accept the current request
+    batchOperations.push({
+      type: "update",
+      collection: COLLECTIONS.REQUESTS,
+      id: requestId,
+      data: {
+        isAccepted: true,
+        status: REQUEST_STATUS.Accepted.label,
+      },
+    });
+
+    // Delete opposing request if exists
+    if (opposingRequest && opposingRequest.id) {
+      batchOperations.push({
+        type: "delete",
+        collection: COLLECTIONS.REQUESTS,
+        id: opposingRequest.id,
+      });
+    }
+
+    // Execute batch operations
+    await firestoreService.batchWrite(batchOperations);
+
+    if (opposingRequest) {
+      console.log("✅ Accepted request and deleted opposing request");
+    } else {
+      console.log("✅ Accepted request (no opposing request found)");
+    }
+
+    // Return the updated request
+    const updated = await firestoreService.getById<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      requestId
+    );
+    return updated;
+  } catch (error) {
+    console.log("❌ Accepting request failed:", error);
+    return null;
+  }
+};
+
+// ← UPDATED: Create connecting request with better validation
 export const createConnectingRequest = async (
   request: ConnectingRequest
 ): Promise<ConnectingRequest | null> => {
   try {
+    console.log("📤 Creating connecting request...");
+
+    // ← NEW: Check if request can be sent
+    const canSend = await canSendRequest(request.senderId, request.receiverId);
+    if (!canSend.canSend) {
+      throw new Error(canSend.reason || "Cannot send request");
+    }
+
+    // ← NEW: Check for existing denied request and update it instead
+    const existingRequests =
+      await firestoreService.queryWhere<ConnectingRequest>(
+        COLLECTIONS.REQUESTS,
+        [
+          { field: "senderId", operator: "==", value: request.senderId },
+          { field: "receiverId", operator: "==", value: request.receiverId },
+          {
+            field: "status",
+            operator: "==",
+            value: REQUEST_STATUS.Denied.label,
+          },
+        ]
+      );
+
+    if (existingRequests.length > 0) {
+      // Update existing denied request instead of creating new one
+      const existingRequest = existingRequests[0];
+      console.log(`🔄 Updating existing denied request: ${existingRequest.id}`);
+
+      const updated = await firestoreService.update<ConnectingRequest>(
+        COLLECTIONS.REQUESTS,
+        existingRequest.id!,
+        {
+          status: REQUEST_STATUS.Waiting.label,
+          date: request.date, // Update date to current
+        }
+      );
+
+      console.log("✅ Updated existing denied request to waiting");
+      return updated;
+    }
+
+    // Create new request if no existing denied request found
     const newRequest = await firestoreService.create<ConnectingRequest>(
       COLLECTIONS.REQUESTS,
       request
     );
+
+    console.log("✅ Created new connecting request");
     return newRequest;
   } catch (error) {
-    console.log("Creating connecting request failed:", error);
-    return null;
+    console.log("❌ Creating connecting request failed:", error);
+    throw error; // Re-throw to let UI handle the error message
+  }
+};
+
+// ← UPDATED: Enhanced hasPendingRequest for UI to show better messages
+export const getRequestStatus = async (
+  userAId: string,
+  userBId: string
+): Promise<{
+  hasRequest: boolean;
+  status?: string;
+  direction?: "outgoing" | "incoming";
+  requestId?: string;
+}> => {
+  try {
+    const requests = await firestoreService.queryWhere<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      [
+        {
+          field: "status",
+          operator: "in",
+          value: [
+            REQUEST_STATUS.Waiting.label,
+            REQUEST_STATUS.Accepted.label,
+            REQUEST_STATUS.Denied.label,
+          ],
+        },
+      ]
+    );
+
+    // Check for request from A to B
+    const outgoingRequest = requests.find(
+      (req) => req.senderId === userAId && req.receiverId === userBId
+    );
+
+    // Check for request from B to A
+    const incomingRequest = requests.find(
+      (req) => req.senderId === userBId && req.receiverId === userAId
+    );
+
+    if (outgoingRequest) {
+      return {
+        hasRequest: true,
+        status: outgoingRequest.status,
+        direction: "outgoing",
+        requestId: outgoingRequest.id,
+      };
+    }
+
+    if (incomingRequest) {
+      return {
+        hasRequest: true,
+        status: incomingRequest.status,
+        direction: "incoming",
+        requestId: incomingRequest.id,
+      };
+    }
+
+    return { hasRequest: false };
+  } catch (error) {
+    console.log("Error getting request status:", error);
+    return { hasRequest: false };
   }
 };
 
@@ -331,25 +588,6 @@ export const getUsersFromRequests = async (
   }
 };
 
-// Accept a connecting request
-export const acceptRequest = async (
-  requestId: string
-): Promise<ConnectingRequest | null> => {
-  try {
-    const updated = await firestoreService.update<ConnectingRequest>(
-      COLLECTIONS.REQUESTS,
-      requestId,
-      {
-        status: REQUEST_STATUS.Accepted.label,
-      }
-    );
-    return updated;
-  } catch (error) {
-    console.log("Accepting request failed:", error);
-    return null;
-  }
-};
-
 // Deny a connecting request
 export const denyRequest = async (
   requestId: string
@@ -359,6 +597,7 @@ export const denyRequest = async (
       COLLECTIONS.REQUESTS,
       requestId,
       {
+        isAccepted: false,
         status: REQUEST_STATUS.Denied.label,
       }
     );
@@ -450,6 +689,9 @@ export const resendDeniedRequest = async (
       COLLECTIONS.REQUESTS,
       requestId,
       {
+        isAccepted: false, // Reset acceptance
+        date: new Date().toISOString(), // Update date to current
+        // Reset status to waiting
         status: REQUEST_STATUS.Waiting.label,
       }
     );
@@ -486,7 +728,7 @@ export const deleteRequest = async (requestId: string): Promise<boolean> => {
   }
 };
 
-// Delete a friend from list
+// Delete a friend from list and mark original request as denied
 export const deleteFriend = async (
   userId: string,
   friendId: string
@@ -494,7 +736,51 @@ export const deleteFriend = async (
   try {
     console.log(`🗑️ Deleting friend relationship: ${userId} <-> ${friendId}`);
 
-    // Get both users
+    // Step 1: Find the original accepted request between these users
+    console.log("🔍 Finding original request between users...");
+
+    const requests = await firestoreService.queryWhere<ConnectingRequest>(
+      COLLECTIONS.REQUESTS,
+      [
+        {
+          field: "status",
+          operator: "==",
+          value: REQUEST_STATUS.Accepted.label,
+        },
+      ]
+    );
+
+    console.log(`Found: ${requests}`);
+
+    // Find the request between these two users (could be either direction)
+    const originalRequest = requests.find(
+      (req) =>
+        (req.senderId === userId && req.receiverId === friendId) ||
+        (req.senderId === friendId && req.receiverId === userId)
+    );
+
+    // Step 2: Update the request status to "Denied" if found
+    if (originalRequest && originalRequest.id) {
+      console.log(
+        `📝 Updating request ${originalRequest.id} status to Denied...`
+      );
+
+      await firestoreService.update<ConnectingRequest>(
+        COLLECTIONS.REQUESTS,
+        originalRequest.id,
+        {
+          status: REQUEST_STATUS.Denied.label,
+        }
+      );
+
+      console.log("✅ Request status updated to Denied");
+    } else {
+      console.log(
+        "⚠️ No accepted request found between users (they might have been added through another method)"
+      );
+    }
+
+    // Step 3: Get both users (existing logic)
     const [user, friend] = await Promise.all([
       getUserById(userId),
       getUserById(friendId),
@@ -504,7 +790,7 @@ export const deleteFriend = async (
       throw new Error("User or friend not found");
     }
 
-    // Remove each other from friends lists
+    // Step 4: Remove each other from friends lists (existing logic)
     const updatedUserFriends = Array.isArray(user.friends)
       ? user.friends.filter((id: string) => id !== friendId)
       : [];
@@ -513,7 +799,7 @@ export const deleteFriend = async (
       ? friend.friends.filter((id: string) => id !== userId)
       : [];
 
-    // Use batch operation for atomic update
+    // Step 5: Use batch operation for atomic update of users (existing logic)
     await firestoreService.batchWrite([
       {
         type: "update",
@@ -530,6 +816,10 @@ export const deleteFriend = async (
     ]);
 
     console.log("✅ Friend relationship deleted successfully");
+    console.log(
+      `📊 Summary: Removed friendship + Set original request to Denied`
+    );
+
     return true;
   } catch (error) {
     console.log("❌ Deleting friend failed:", error);

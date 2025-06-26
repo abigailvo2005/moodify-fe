@@ -299,7 +299,7 @@ class AIService {
 
       console.log("🤖 Google AI model initialized successfully");
     } catch (error) {
-      console.error("❌ Failed to initialize Google AI:", error);
+      console.log("❌ Failed to initialize Google AI:", error);
       this.genAI = null;
       this.model = null;
     }
@@ -353,7 +353,7 @@ class AIService {
       console.log("✅ AI response generated successfully");
       return text.trim();
     } catch (error) {
-      console.error("❌ AI Service Error:", error);
+      console.log("❌ AI Service Error:", error);
 
       if (
         error &&

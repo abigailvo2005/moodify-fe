@@ -67,7 +67,7 @@ export const MoodCamera: React.FC<CameraProps> = ({
       }
     } catch (error: any) {
       Alert.alert("Error", "Failed to take photo");
-      console.error("Take photo error:", error);
+      console.log("Take photo error:", error);
     } finally {
       setUploading(false);
       setUploadProgress("");
@@ -91,7 +91,7 @@ export const MoodCamera: React.FC<CameraProps> = ({
       }
     } catch (error: any) {
       Alert.alert("Error", "Failed to pick photo");
-      console.error("Pick photo error:", error);
+      console.log("Pick photo error:", error);
     } finally {
       setUploading(false);
       setUploadProgress("");

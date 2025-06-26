@@ -13,12 +13,12 @@ console.log("Anon Key:", supabaseAnonKey ? "Set" : "Missing");
 
 // Validate configuration
 if (!supabaseUrl) {
-  console.error("❌ EXPO_PUBLIC_SUPABASE_URL is missing!");
+  console.log("❌ EXPO_PUBLIC_SUPABASE_URL is missing!");
   throw new Error("Supabase URL is required");
 }
 
 if (!supabaseAnonKey) {
-  console.error("❌ EXPO_PUBLIC_SUPABASE_ANON_KEY is missing!");
+  console.log("❌ EXPO_PUBLIC_SUPABASE_ANON_KEY is missing!");
   throw new Error("Supabase Anon Key is required");
 }
 
@@ -54,7 +54,7 @@ export const testSupabaseConnection = async () => {
     console.log("✅ Supabase connection successful");
     return true;
   } catch (error) {
-    console.error("❌ Supabase connection failed:", error);
+    console.log("❌ Supabase connection failed:", error);
     return false;
   }
 };

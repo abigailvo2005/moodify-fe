@@ -51,7 +51,7 @@ export default function ProfileScreen({ navigation }: any) {
 
             console.log("✅ Logout completed successfully");
           } catch (error) {
-            console.error("❌ Error during logout:", error);
+            console.log("❌ Error during logout:", error);
             Alert.alert("Error", "Failed to logout properly");
           }
         },

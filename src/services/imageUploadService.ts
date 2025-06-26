@@ -1,4 +1,4 @@
-// src/services/supabaseImageService.ts - FIXED VERSION
+// src/services/supabaseImageService.ts
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { supabase, STORAGE_BUCKET } from './supabase';
@@ -16,7 +16,7 @@ class SupabaseImageService {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       return status === 'granted';
     } catch (error) {
-      console.error('Camera permission error:', error);
+      console.log('Camera permission error:', error);
       return false;
     }
   }
@@ -27,7 +27,7 @@ class SupabaseImageService {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       return status === 'granted';
     } catch (error) {
-      console.error('Media library permission error:', error);
+      console.log('Media library permission error:', error);
       return false;
     }
   }
@@ -67,7 +67,7 @@ class SupabaseImageService {
       return uploadResult;
 
     } catch (error: any) {
-      console.error('Take photo error:', error);
+      console.log('Take photo error:', error);
       return { 
         success: false, 
         error: `Failed to take photo: ${error.message}` 
@@ -110,7 +110,7 @@ class SupabaseImageService {
       return uploadResult;
 
     } catch (error: any) {
-      console.error('Pick from gallery error:', error);
+      console.log('Pick from gallery error:', error);
       return { 
         success: false, 
         error: `Failed to pick image: ${error.message}` 
@@ -193,7 +193,7 @@ class SupabaseImageService {
 
       } catch (fsError: any) {
         console.log('⚠️ expo-file-system method failed, trying fetch method...');
-        console.error('FileSystem error:', fsError);
+        console.log('FileSystem error:', fsError);
 
         // ✅ METHOD 2: Using fetch as fallback
         console.log('🔄 Using fetch method as fallback...');
@@ -254,7 +254,7 @@ class SupabaseImageService {
       }
 
     } catch (error: any) {
-      console.error('💥 Upload error:', error);
+      console.log('💥 Upload error:', error);
       
       // Handle specific Supabase errors
       if (error.message?.includes('Bucket not found')) {
@@ -325,7 +325,7 @@ class SupabaseImageService {
       const bucketIndex = pathParts.indexOf(STORAGE_BUCKET);
       
       if (bucketIndex === -1) {
-        console.error('❌ Invalid image URL for deletion');
+        console.log('❌ Invalid image URL for deletion');
         return false;
       }
       
@@ -338,7 +338,7 @@ class SupabaseImageService {
         .remove([filePath]);
       
       if (error) {
-        console.error('❌ Delete error:', error);
+        console.log('❌ Delete error:', error);
         return false;
       }
       
@@ -346,7 +346,7 @@ class SupabaseImageService {
       return true;
       
     } catch (error: any) {
-      console.error('❌ Delete image error:', error);
+      console.log('❌ Delete image error:', error);
       return false;
     }
   }
@@ -371,7 +371,7 @@ class SupabaseImageService {
         });
       
       if (error) {
-        console.error('❌ Test upload failed:', error);
+        console.log('❌ Test upload failed:', error);
         return false;
       }
       
@@ -385,7 +385,7 @@ class SupabaseImageService {
       return true;
       
     } catch (error: any) {
-      console.error('❌ Test upload error:', error);
+      console.log('❌ Test upload error:', error);
       return false;
     }
   }

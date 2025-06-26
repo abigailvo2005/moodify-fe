@@ -39,7 +39,7 @@ export default function App() {
       setFontsLoaded(true);
       console.log("✅ All custom fonts loaded successfully");
     } catch (error) {
-      console.error("❌ Error loading fonts:", error);
+      console.log("❌ Error loading fonts:", error);
       setFontError(true);
 
       // Continue with system fonts if custom fonts fail
